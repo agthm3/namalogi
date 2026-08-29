@@ -32,6 +32,7 @@
         }
         .btn-ctrl:hover { background: rgba(255, 255, 255, 0.2); }
         .btn-ctrl.active { background: var(--primary); border-color: var(--primary); }
+        .btn-bgm { background: var(--accent-gold); color: #000; border-color: #fff; }
 
         /* --- ARENA --- */
         main.arena {
@@ -50,6 +51,18 @@
             transform: rotateX(60deg); box-shadow: 0 0 80px rgba(239, 35, 60, 0.3);
             z-index: 1;
         }
+
+        /* --- COMBO COUNTER --- */
+        .combo-counter {
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%) scale(1);
+            font-size: 5rem; font-weight: 900; color: #fff; text-transform: uppercase;
+            text-shadow: 0 0 20px var(--secondary), 3px 3px 0px #000; z-index: 25;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; text-align: center;
+        }
+        .combo-counter.show { opacity: 1; }
+        .combo-counter.pop { animation: comboPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .combo-counter.hot { color: var(--accent-gold); text-shadow: 0 0 30px #f48c06, 3px 3px 0px #000; font-size: 6rem; }
+        @keyframes comboPop { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.3); } 100% { transform: translateX(-50%) scale(1); } }
 
         /* --- HUD --- */
         .hud {
@@ -76,30 +89,20 @@
             background: rgba(0, 0, 0, 0.85); border: 2px solid var(--accent-gold);
             border-radius: 10px; padding: 15px; width: 300px; box-shadow: 0 0 15px rgba(255, 183, 3, 0.4);
         }
-        .lb-title {
-            color: var(--accent-gold); font-weight: 900; font-size: 1.1rem;
-            text-align: center; margin-bottom: 10px; border-bottom: 1px solid var(--accent-gold); padding-bottom: 5px;
-        }
-        .lb-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem; font-weight: bold;
-        }
+        .lb-title { color: var(--accent-gold); font-weight: 900; font-size: 1.1rem; text-align: center; margin-bottom: 10px; border-bottom: 1px solid var(--accent-gold); padding-bottom: 5px; }
+        .lb-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem; font-weight: bold; }
         .lb-rank { color: var(--secondary); margin-right: 5px; width: 25px; }
         .lb-name { flex-grow: 1; text-align: left; margin: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
         .lb-dmg { color: #ef233c; font-weight: 900; text-align: right; }
 
-        /* --- FIGHTERS CONTAINER (Fixed Overlap Issue) --- */
-        /* Padding-right 340px ensures fighters stop spawning right before the Leaderboard area */
+        /* --- FIGHTERS CONTAINER --- */
         .fighters-container {
             position: absolute; top: 25%; left: 0; right: 0; height: 70%;
             display: flex; justify-content: flex-start; align-items: flex-end;
             z-index: 10; padding: 0 340px 0 5%; gap: 20px;
         }
 
-        .boss-char {
-            display: flex; flex-direction: column; align-items: center;
-            width: 30%; min-width: 250px; transition: opacity 0.5s;
-        }
+        .boss-char { display: flex; flex-direction: column; align-items: center; width: 30%; min-width: 250px; transition: opacity 0.5s; }
         .boss-name {
             font-size: 2.2rem; font-weight: 900; padding: 5px 25px; border-radius: 10px;
             margin-bottom: 5px; text-transform: uppercase; color: var(--primary);
@@ -109,21 +112,16 @@
         
         .swarm-container {
             flex-grow: 1; height: 100%; display: flex; flex-wrap: wrap-reverse;
-            align-content: flex-end; justify-content: flex-end; gap: 15px;
-            padding-bottom: 40px; margin-left: auto;
+            align-content: flex-end; justify-content: flex-end; gap: 15px; padding-bottom: 40px; margin-left: auto;
         }
 
-        .netizen-char {
-            display: flex; flex-direction: column; align-items: center;
-            width: 120px; transition: 0.3s;
-        }
+        .netizen-char { display: flex; flex-direction: column; align-items: center; width: 120px; transition: 0.3s; }
         .netizen-char.sultan { width: 160px; filter: drop-shadow(0 0 15px rgba(255, 183, 3, 0.6)); } 
         
         .netizen-name {
             font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.8);
             padding: 3px 8px; border-radius: 5px; text-overflow: ellipsis; 
-            overflow: hidden; white-space: nowrap; max-width: 95%; border: 1px solid;
-            margin-bottom: 2px; text-align: center;
+            overflow: hidden; white-space: nowrap; max-width: 95%; border: 1px solid; margin-bottom: 2px; text-align: center;
         }
         .sultan .netizen-name { font-size: 1.1rem; color: #000 !important; background: var(--accent-gold); border-color: #fff !important; }
         
@@ -153,12 +151,7 @@
             text-align: center; opacity: 0; pointer-events: none; width: 100%;
         }
         .ult-active { animation: ultPop 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes ultPop { 
-            0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; } 
-            15% { transform: translate(-50%, -50%) scale(1.1) rotate(0deg); opacity: 1; }
-            85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } 
-        }
+        @keyframes ultPop { 0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.1) rotate(0deg); opacity: 1; } 85% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
 
         .damage-text {
             position: absolute; font-size: 3.5rem; font-weight: 900; color: #fff;
@@ -166,6 +159,27 @@
             animation: floatUp 1s forwards; opacity: 1;
         }
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-130px) scale(1.5); opacity: 0; } }
+
+        /* --- SETTINGS BGM MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); z-index: 100; backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            background: #111; border: 2px solid var(--accent-gold); padding: 30px;
+            border-radius: 15px; width: 500px; max-width: 90%; text-align: center;
+        }
+        .modal-title { font-size: 1.8rem; font-weight: bold; color: var(--accent-gold); margin-bottom: 15px; }
+        .modal-box textarea {
+            width: 100%; height: 120px; background: #222; border: 1px solid #555;
+            color: #fff; padding: 10px; border-radius: 8px; font-size: 1rem; outline: none; margin-bottom: 15px; resize: none;
+        }
+        .btn-modal { padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; margin: 5px; }
+        .btn-modal.save { background: var(--accent-gold); color: #000; }
+        .btn-modal.close { background: #555; color: #fff; }
 
         /* --- GRAVEYARD MODAL --- */
         .graveyard-overlay {
@@ -176,43 +190,23 @@
         }
         .graveyard-overlay.show { opacity: 1; pointer-events: auto; }
         .grave-title { font-size: 3rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.5); margin-bottom: 25px; letter-spacing: 2px;}
-        .grave-grid {
-            display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
-            max-width: 80%; max-height: 60%; overflow-y: auto; padding: 20px;
-        }
-        .grave-stone {
-            background: linear-gradient(180deg, #555, #222); width: 130px; padding: 15px 10px;
-            border-radius: 50px 50px 10px 10px; border: 2px solid #777; border-bottom: 8px solid #333;
-            display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-        }
-        .grave-stone.sultan {
-            background: linear-gradient(180deg, #b8860b, #4a3b10); border-color: #ffd166; border-bottom-color: #8b6508;
-            box-shadow: 0 0 15px rgba(255, 183, 3, 0.4);
-        }
+        .grave-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 80%; max-height: 60%; overflow-y: auto; padding: 20px; }
+        .grave-stone { background: linear-gradient(180deg, #555, #222); width: 130px; padding: 15px 10px; border-radius: 50px 50px 10px 10px; border: 2px solid #777; border-bottom: 8px solid #333; display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
+        .grave-stone.sultan { background: linear-gradient(180deg, #b8860b, #4a3b10); border-color: #ffd166; border-bottom-color: #8b6508; box-shadow: 0 0 15px rgba(255, 183, 3, 0.4); }
         .grave-icon { font-size: 2.8rem; margin-bottom: 8px; }
         .grave-name { font-weight: 900; font-size: 0.95rem; color: #fff; width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-bottom: 5px; text-align: center;}
         .grave-stat { font-size: 0.8rem; color: #ccc; font-weight: bold;}
-        .grave-stone.sultan .grave-stat { color: #ffe066; }
 
         /* --- CONTROL PANEL --- */
         .control-panel {
             position: relative; z-index: 30; background: rgba(0,0,0,0.95); padding: 20px;
             border-top: 3px solid #666; display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;
         }
-        input[type="text"] {
-            padding: 12px 20px; font-size: 1.2rem; border-radius: 10px; border: 2px solid #555;
-            background: #111; color: #fff; width: 320px; text-transform: uppercase; outline: none; transition: 0.3s;
-        }
+        input[type="text"] { padding: 12px 20px; font-size: 1.2rem; border-radius: 10px; border: 2px solid #555; background: #111; color: #fff; width: 320px; text-transform: uppercase; outline: none; transition: 0.3s; }
         input[type="text"]:focus { border-color: #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
-        
-        .btn-spawn {
-            padding: 12px 18px; font-size: 1.1rem; font-weight: 900; color: #000;
-            background: #fff; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); transition: 0.2s; display: flex; align-items: center; gap: 8px;
-        }
+        .btn-spawn { padding: 12px 18px; font-size: 1.1rem; font-weight: 900; color: #000; background: #fff; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .btn-spawn:hover { transform: scale(1.05); }
         .btn-sultan { background: linear-gradient(45deg, var(--accent-gold), #ffe066); color: #000; box-shadow: 0 0 20px rgba(255, 183, 3, 0.6); border: 2px solid #fff; }
-        
         .btn-grave-control { background: #333; color: #fff; border: 2px solid #666; box-shadow: none; }
         .btn-grave-control:hover { background: #555; }
         .btn-auto-active { background: #06d6a0 !important; color: #000 !important; border-color: #fff !important; box-shadow: 0 0 15px rgba(6, 214, 160, 0.5) !important; }
@@ -228,9 +222,11 @@
         .anim-hit-right { animation: hitRight 0.4s; filter: brightness(2) sepia(1) hue-rotate(150deg) saturate(5); }
         @keyframes hitLeft { 0%, 100% { transform: translate(0,0) rotate(0); } 40% { transform: translate(-30px, -10px) rotate(-15deg); } }
         @keyframes hitRight { 0%, 100% { transform: translate(0,0) rotate(0); } 40% { transform: translate(30px, -10px) rotate(15deg); } }
-        
         .anim-die { animation: die 0.6s forwards; }
         @keyframes die { 0% { transform: scale(1) rotate(0); opacity: 1; } 100% { transform: translate(50px, 100px) scale(0) rotate(180deg); opacity: 0; } }
+        
+        .camera-shake { animation: camShake 0.4s; }
+        @keyframes camShake { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-10px, 10px); } 40% { transform: translate(10px, -10px); } 60% { transform: translate(-10px, -10px); } 80% { transform: translate(10px, 10px); } }
 
         /* --- STREAM MODE --- */
         body.stream-mode .boss-name { font-size: 3.5rem; }
@@ -238,22 +234,18 @@
         body.stream-mode .netizen-char { width: 140px; }
         body.stream-mode .netizen-char.sultan { width: 200px; }
         body.stream-mode .hp-text { font-size: 2.2rem; }
+        body.stream-mode .combo-counter { font-size: 8rem; }
+        body.stream-mode .combo-counter.hot { font-size: 10rem; }
         body.stream-mode .swarm-stats { font-size: 2.2rem; }
-        body.stream-mode .leaderboard { width: 380px; padding: 25px; } /* Wider LB for stream mode */
+        body.stream-mode .leaderboard { width: 380px; padding: 25px; }
         body.stream-mode .lb-title { font-size: 1.5rem; }
         body.stream-mode .lb-item { font-size: 1.3rem; padding: 8px 0;}
         body.stream-mode .lb-name { max-width: 180px; }
         body.stream-mode .combat-log { font-size: 2.5rem; bottom: 180px; }
         body.stream-mode .ultimate-overlay { font-size: 8rem; }
-        
-        /* Graveyard Stream Mode */
         body.stream-mode .grave-title { font-size: 4.5rem; }
         body.stream-mode .grave-stone { width: 160px; padding: 20px 15px; border-width: 3px; border-bottom-width: 10px;}
-        body.stream-mode .grave-icon { font-size: 3.5rem; }
-        body.stream-mode .grave-name { font-size: 1.2rem; }
-        body.stream-mode .grave-stat { font-size: 1rem; }
-
-        body.stream-mode .fighters-container { padding-right: 440px; } /* Prevent overlap in stream mode */
+        body.stream-mode .fighters-container { padding-right: 440px; }
         body.stream-mode .control-panel { padding: 30px; }
         body.stream-mode input[type="text"] { font-size: 1.8rem; width: 400px; padding: 18px; }
         body.stream-mode .btn-spawn { font-size: 1.4rem; padding: 18px 25px;}
@@ -265,13 +257,16 @@
         <a href="index.html" class="btn-ctrl">← KEMBALI</a>
         <div style="color: var(--accent-gold); font-weight: bold; font-size: 1.2rem; letter-spacing: 2px;">🏆 ARENA KEROYOKAN</div>
         <div style="display: flex; gap: 10px;">
+            <button class="btn-ctrl btn-bgm" onclick="toggleSettingsModal()">🎵 SETTING BGM</button>
             <button class="btn-ctrl" id="btn-stream" onclick="toggleStreamMode()">🎥 STREAM MODE</button>
             <button class="btn-ctrl" onclick="toggleFullscreen()">🖥 FULLSCREEN</button>
         </div>
     </header>
 
-    <main class="arena">
+    <main class="arena" id="arenaMain">
         <div class="ring-floor"></div>
+        
+        <div class="combo-counter" id="comboCounter">0 HITS</div>
         
         <!-- HUD -->
         <div class="hud">
@@ -279,17 +274,11 @@
                 <div id="boss-hp-fill"></div>
                 <div class="hp-text" id="boss-hp-text">0 / 0</div>
             </div>
-            
             <div class="right-hud">
-                <div class="swarm-stats">
-                    PASUKAN: <span id="netizen-count">0</span>
-                </div>
-                
+                <div class="swarm-stats">PASUKAN: <span id="netizen-count">0</span></div>
                 <div class="leaderboard">
                     <div class="lb-title">🏆 TOP DAMAGE MVP</div>
-                    <div id="lb-list">
-                        <div class="lb-item" style="color: #666; justify-content: center;">Belum ada data</div>
-                    </div>
+                    <div id="lb-list"><div class="lb-item" style="color: #666; justify-content: center;">Belum ada data</div></div>
                 </div>
             </div>
         </div>
@@ -297,9 +286,7 @@
         <!-- GRAVEYARD OVERLAY -->
         <div class="graveyard-overlay" id="graveyard-overlay">
             <div class="grave-title">🪦 KUBURAN PAHLAWAN 🪦</div>
-            <div class="grave-grid" id="grave-grid">
-                <!-- Grave stones injected here -->
-            </div>
+            <div class="grave-grid" id="grave-grid"></div>
         </div>
 
         <div class="ultimate-overlay" id="ult-text">JURUS ULTIMATE!</div>
@@ -307,15 +294,10 @@
 
         <!-- FIGHTERS -->
         <div class="fighters-container">
-            <!-- BOSS -->
             <div class="boss-char" id="boss">
                 <div class="boss-name" id="boss-name">...</div>
-                <div class="fighter-body idle-bob" id="boss-body">
-                    <!-- SVG Stickman Boss -->
-                </div>
+                <div class="fighter-body idle-bob" id="boss-body"></div>
             </div>
-            
-            <!-- NETIZENS SWARM -->
             <div class="swarm-container" id="swarm"></div>
         </div>
     </main>
@@ -324,14 +306,103 @@
     <div class="control-panel">
         <input type="text" id="inputName" placeholder="Ketik Nama (Komen / Gift)" onkeypress="handleEnter(event)" autocomplete="off">
         <button class="btn-spawn" onclick="spawnNetizen('normal')">💬 KOMEN</button>
-        <button class="btn-spawn btn-sultan" onclick="spawnNetizen('sultan')">🎁 GIFT</button>
-        <button class="btn-spawn btn-grave-control" onclick="showGraveyard()">🪦 LIHAT KUBURAN</button>
+        <button class="btn-spawn btn-sultan" onclick="spawnNetizen('sultan')">🎁 SULTAN</button>
+        <button class="btn-spawn btn-grave-control" onclick="showGraveyard()">🪦 KUBURAN</button>
         <button class="btn-spawn btn-grave-control" id="btn-auto-grave" onclick="toggleAutoGrave()">AUTO: OFF 🔴</button>
     </div>
 
+    <!-- SETTINGS MODAL (YOUTUBE BGM) -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-box">
+            <div class="modal-title">🎵 Playlist BGM YouTube</div>
+            <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 10px;">Paste link YouTube (Satu baris satu link)</p>
+            <textarea id="ytLinks" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..."></textarea>
+            <div>
+                <button class="btn-modal close" onclick="toggleSettingsModal()">Tutup</button>
+                <button class="btn-modal save" onclick="saveAndPlayBGM()">▶️ Simpan & Putar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden YouTube Player -->
+    <div style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none;" id="ytplayer-container"></div>
+
     <script>
         // ==========================================
-        // DATABASE SENJATA ACAK
+        // YOUTUBE BGM PLAYER API
+        // ==========================================
+        let ytPlayer;
+        let ytPlaylist = [];
+        let ytCurrentIdx = 0;
+
+        // Load YouTube API
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('ytplayer-container', {
+                height: '100', width: '100',
+                playerVars: { 'playsinline': 1 },
+                events: { 'onStateChange': onPlayerStateChange }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                ytCurrentIdx++;
+                if (ytCurrentIdx >= ytPlaylist.length) ytCurrentIdx = 0; // Looping
+                if (ytPlaylist.length > 0) ytPlayer.loadVideoById(ytPlaylist[ytCurrentIdx]);
+            }
+        }
+
+        function extractVideoID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('show');
+        }
+
+        function saveAndPlayBGM() {
+            const text = document.getElementById('ytLinks').value;
+            const lines = text.split('\n');
+            ytPlaylist = [];
+            lines.forEach(line => {
+                const id = extractVideoID(line.trim());
+                if(id) ytPlaylist.push(id);
+            });
+
+            if(ytPlaylist.length > 0 && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                ytCurrentIdx = 0;
+                ytPlayer.loadVideoById(ytPlaylist[ytCurrentIdx]);
+                toggleSettingsModal();
+            } else {
+                alert("Masukkan minimal 1 link YouTube yang valid.");
+            }
+        }
+
+        // ==========================================
+        // AI KOMENTATOR (WEB SPEECH API)
+        // ==========================================
+        function speakComentator(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel existing to avoid queue buildup if spammed
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID';
+                utterance.rate = 1.1; // Sedikit lebih cepat seperti komentator
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // ==========================================
+        // DATABASE SENJATA & STICKMAN SVG
         // ==========================================
         const dbWeapons = [
             { name: "Tangan Kosong", bonus: 0, svg: `` },
@@ -341,85 +412,28 @@
             { name: "Toa Megafon", bonus: 35, svg: `<g transform="translate(135,100) rotate(15)"><path d="M 5 -5 L 25 -15 L 25 5 Z" fill="#ef233c"/><rect x="0" y="-5" width="8" height="10" fill="#ccc"/></g>` }
         ];
 
-        // ==========================================
-        // GENERATOR STICKMAN SVG MURNI
-        // ==========================================
         function getStickmanSVG(color, isBoss, isSultan = false, weaponSVG = '') {
             const glow = isBoss ? `filter="drop-shadow(0 0 10px ${color})"` : '';
             const crown = isSultan ? `<path d="M 75 10 L 85 -5 L 90 10 L 95 -5 L 105 10 L 100 25 L 80 25 Z" fill="gold" stroke="#000" stroke-width="1" />` : '';
-            
             return `
             <svg class="${isBoss ? 'stickman-boss' : 'stickman-netizen'}" viewBox="0 -20 200 270" ${glow}>
                 <g stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                    <!-- Legs -->
-                    <path d="M90,155 L105,210"/>
-                    <ellipse cx="110" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
-                    <path d="M70,155 L50,210"/>
-                    <ellipse cx="45" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
-                    
-                    <!-- Torso -->
+                    <path d="M90,155 L105,210"/><ellipse cx="110" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
+                    <path d="M70,155 L50,210"/><ellipse cx="45" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
                     <path d="M80,60 L75,120"/>
-                    
-                    <!-- Shorts -->
                     <path d="M55,120 L95,120 L105,160 L80,150 L55,160 Z" fill="${color}" stroke="#fff" stroke-width="4"/>
                     <path d="M80,120 L80,150" stroke="#fff" stroke-width="3"/>
                     <path d="M60,125 L55,155" stroke="#fff" stroke-width="2"/>
-                    
-                    <!-- Head & Face -->
                     <circle cx="90" cy="35" r="28" fill="${isBoss ? 'rgba(239,35,60,0.1)' : 'rgba(255,255,255,0.05)'}"/>
                     <path d="M95,25 L112,33" stroke="#fff" stroke-width="4"/>
                     <circle cx="106" cy="38" r="4" fill="#fff" stroke="none"/>
                     <path d="M95,52 Q105,45 112,52" stroke="#fff" stroke-width="3"/>
                     ${crown}
-                    
-                    <!-- Back Arm & Glove -->
-                    <path d="M80,75 L125,65"/>
-                    <rect x="115" y="52" width="12" height="22" fill="#fff" stroke="none" transform="rotate(-15 125 60)"/>
-                    <circle cx="140" cy="60" r="18" fill="${color}" stroke="#fff" stroke-width="3"/>
-                    
-                    <!-- Front Arm, Glove & Weapon -->
-                    <path d="M75,90 L115,100"/>
-                    <rect x="105" y="85" width="12" height="24" fill="#fff" stroke="none" transform="rotate(10 115 100)"/>
-                    <circle cx="135" cy="100" r="22" fill="${color}" stroke="#fff" stroke-width="3"/>
+                    <path d="M80,75 L125,65"/><rect x="115" y="52" width="12" height="22" fill="#fff" stroke="none" transform="rotate(-15 125 60)"/><circle cx="140" cy="60" r="18" fill="${color}" stroke="#fff" stroke-width="3"/>
+                    <path d="M75,90 L115,100"/><rect x="105" y="85" width="12" height="24" fill="#fff" stroke="none" transform="rotate(10 115 100)"/><circle cx="135" cy="100" r="22" fill="${color}" stroke="#fff" stroke-width="3"/>
                     ${weaponSVG}
                 </g>
             </svg>`;
-        }
-
-        // ==========================================
-        // AUDIO SYNTHESIZER
-        // ==========================================
-        let audioCtx;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playPunch() {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'square'; osc.frequency.setValueAtTime(120 + Math.random()*50, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-        }
-
-        function playUlt() {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 1.2);
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 1.2);
-        }
-
-        function playKO() {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(250, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 1);
         }
 
         // ==========================================
@@ -434,36 +448,15 @@
             { name: "Mulyoni", hp: 99999, atk: 1200, ultName: "JET PRIBADI NEPOTISME", ultChance: 0.20, ultMult: 5 }
         ];
 
-        let currentBossIdx = 0;
-        let b = null; 
-        let netizens = []; 
-        let fightInterval = null;
-        let damageTracker = {}; 
-        let graveyard = []; 
+        let currentBossIdx = 0; let b = null; let netizens = []; let fightInterval = null;
+        let damageTracker = {}; let graveyard = [];
+        let autoGraveInterval = null; let isAutoGrave = false; let isGraveShowing = false;
         
-        let autoGraveInterval = null;
-        let isAutoGrave = false;
-        let isGraveShowing = false;
+        let comboCount = 0;
+        let comboResetTimer = null;
 
-        // SEED GEN
-        function cyrb128(str) {
-            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
-            for(let i=0, k; i<str.length; i++) {
-                k = str.charCodeAt(i);
-                h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
-                h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
-            }
-            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
-            h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179); h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
-            return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
-        }
-        function sfc32(a, b, c, d) {
-            return function() {
-                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; let t = (a + b) | 0;
-                a = b ^ b >>> 9; b = c + (c << 3) | 0; c = (c << 21 | c >>> 11); d = d + 1 | 0;
-                t = t + d | 0; c = c + t | 0; return (t >>> 0) / 4294967296;
-            }
-        }
+        function cyrb128(str) { let h1=1779033703,h2=3144134277,h3=1013904242,h4=2773480762;for(let i=0,k;i<str.length;i++){k=str.charCodeAt(i);h1=h2^Math.imul(h1^k,597399067);h2=h3^Math.imul(h2^k,2869860233);h3=h4^Math.imul(h3^k,951274213);h4=h1^Math.imul(h4^k,2716044179);}h1=Math.imul(h3^(h1>>>18),597399067);h2=Math.imul(h4^(h2>>>22),2869860233);h3=Math.imul(h1^(h3>>>17),2716044179);h4=Math.imul(h2^(h4>>>19),951274213);return[(h1^h2^h3^h4)>>>0,(h2^h1)>>>0,(h3^h1)>>>0,(h4^h1)>>>0];}
+        function sfc32(a,b,c,d){return function(){a>>>=0;b>>>=0;c>>>=0;d>>>=0;let t=(a+b)|0;a=b^b>>>9;b=c+(c<<3)|0;c=(c<<21|c>>>11);d=d+1|0;t=t+d|0;c=c+t|0;return(t>>>0)/4294967296;}}
 
         // ==========================================
         // CORE LOGIC
@@ -490,7 +483,9 @@
 
             updateBossHP();
             document.getElementById('boss').style.opacity = "1";
-            document.getElementById('combat-log').innerText = `⚠️ ${b.name} masuk Ring! Siapa berani?`;
+            document.getElementById('combat-log').innerText = `⚠️ ${b.name} masuk Ring!`;
+            
+            speakComentator(`Ronde baru dimulai! Pejabat ${b.name} memasuki arena!`);
         }
 
         function updateBossHP() {
@@ -504,64 +499,83 @@
             const sorted = Object.entries(damageTracker).sort((a,b) => b[1] - a[1]).slice(0, 5);
             let html = '';
             sorted.forEach((item, idx) => {
-                html += `
-                <div class="lb-item">
-                    <span class="lb-rank">#${idx+1}</span> 
-                    <span class="lb-name" title="${item[0]}">${item[0]}</span> 
-                    <span class="lb-dmg">${item[1].toLocaleString('id-ID')}</span>
-                </div>`;
+                html += `<div class="lb-item"><span class="lb-rank">#${idx+1}</span> <span class="lb-name" title="${item[0]}">${item[0]}</span> <span class="lb-dmg">${item[1].toLocaleString('id-ID')}</span></div>`;
             });
             if(html === '') html = '<div class="lb-item" style="color:#666; justify-content:center;">Belum ada data</div>';
             document.getElementById('lb-list').innerHTML = html;
         }
 
+        function triggerCombo(hits) {
+            comboCount += hits;
+            const cEl = document.getElementById('comboCounter');
+            cEl.innerText = `${comboCount} HITS!`;
+            cEl.classList.add('show', 'pop');
+            if(comboCount > 15) cEl.classList.add('hot');
+            
+            setTimeout(() => cEl.classList.remove('pop'), 200);
+            
+            clearTimeout(comboResetTimer);
+            comboResetTimer = setTimeout(() => {
+                comboCount = 0;
+                cEl.classList.remove('show', 'hot');
+            }, 3000); // Reset combo if no hits for 3 seconds
+        }
+
         function handleEnter(e) { if(e.key === 'Enter') spawnNetizen('normal'); }
 
         function spawnNetizen(type) {
-            initAudio();
             const inputEl = document.getElementById('inputName');
-            const name = inputEl.value.trim().toUpperCase();
-            if(!name || !b) return;
+            let nameList = inputEl.value.split(','); // Support batch spawn via comma
+            
+            nameList.forEach(name => {
+                name = name.trim().toUpperCase();
+                if(!name || !b) return;
 
-            const seed = cyrb128(name.toLowerCase() + Date.now()); 
-            const prng = sfc32(seed[0], seed[1], seed[2], seed[3]);
-            
-            let hp = Math.floor(prng() * 3000) + 2000; 
-            let atk = Math.floor(prng() * 60) + 30;  
-            let isSultan = false;
-            
-            const weapon = dbWeapons[Math.floor(prng() * dbWeapons.length)];
-            atk += weapon.bonus;
+                const seed = cyrb128(name.toLowerCase() + Date.now()); 
+                const prng = sfc32(seed[0], seed[1], seed[2], seed[3]);
+                
+                let hp = Math.floor(prng() * 3000) + 2000; 
+                let atk = Math.floor(prng() * 60) + 30;  
+                let isSultan = false;
+                
+                const weapon = dbWeapons[Math.floor(prng() * dbWeapons.length)];
+                atk += weapon.bonus;
 
-            if(type === 'sultan') {
-                isSultan = true;
-                hp = Math.floor(prng() * 15000) + 10000; 
-                atk = Math.floor(prng() * 200) + 150;    
-            }
+                if(type === 'sultan') {
+                    isSultan = true;
+                    hp = Math.floor(prng() * 15000) + 10000; 
+                    atk = Math.floor(prng() * 200) + 150;    
+                }
+                
+                const id = 'netizen_' + Date.now() + Math.floor(Math.random()*1000);
+                const hue = Math.floor(prng() * 360);
+                const color = isSultan ? '#ffd166' : `hsl(${hue}, 80%, 60%)`;
+                
+                netizens.push({ id, name, hp, currentHp: hp, atk, color, isSultan });
+                
+                const el = document.createElement('div');
+                el.className = `netizen-char ${isSultan ? 'sultan' : ''}`;
+                el.id = id;
+                el.innerHTML = `
+                    <div class="netizen-name" style="color: ${color}; border-color: ${color};">${name}</div>
+                    <div class="mini-hp"><div class="mini-hp-fill" style="background: ${color}; width:100%"></div></div>
+                    <div class="fighter-body idle-bob-fast">${getStickmanSVG(color, false, isSultan, weapon.svg)}</div>
+                `;
+                document.getElementById('swarm').appendChild(el);
+                
+                let msg = `🔥 ${name} masuk ring!`;
+                if (weapon.bonus > 0) msg = `🔥 ${name} masuk membawa ${weapon.name}!`;
+                
+                if (isSultan) {
+                    msg = `👑 SULTAN ${name} TURUN TANGAN DENGAN ${weapon.name}!`;
+                    speakComentator(`Sultan ${name} memasuki arena pertarungan!`);
+                }
+
+                document.getElementById('combat-log').innerText = msg;
+            });
             
-            const id = 'netizen_' + Date.now() + Math.floor(Math.random()*1000);
-            const hue = Math.floor(prng() * 360);
-            const color = isSultan ? '#ffd166' : `hsl(${hue}, 80%, 60%)`;
-            
-            netizens.push({ id, name, hp, currentHp: hp, atk, color, isSultan });
-            
-            const el = document.createElement('div');
-            el.className = `netizen-char ${isSultan ? 'sultan' : ''}`;
-            el.id = id;
-            el.innerHTML = `
-                <div class="netizen-name" style="color: ${color}; border-color: ${color};">${name}</div>
-                <div class="mini-hp"><div class="mini-hp-fill" style="background: ${color}; width:100%"></div></div>
-                <div class="fighter-body idle-bob-fast">${getStickmanSVG(color, false, isSultan, weapon.svg)}</div>
-            `;
-            document.getElementById('swarm').appendChild(el);
-            
-            inputEl.value = "";
             document.getElementById('netizen-count').innerText = netizens.length;
-            
-            let msg = `🔥 ${name} masuk ring!`;
-            if (weapon.bonus > 0) msg = `🔥 ${name} masuk membawa ${weapon.name}!`;
-            if (isSultan) msg = `👑 SULTAN ${name} TURUN TANGAN DENGAN ${weapon.name}!`;
-            document.getElementById('combat-log').innerText = msg;
+            inputEl.value = "";
         }
 
         function showDamage(rect, amount, isCrit, isBossHit = false) {
@@ -585,10 +599,12 @@
             if(!b || b.currentHp <= 0 || netizens.length === 0) return;
 
             let totalDmg = 0;
+            let netizenHits = 0;
+            
             netizens.forEach(n => {
                 const dmg = Math.floor(n.atk * (0.8 + Math.random()*0.4));
                 totalDmg += dmg;
-                
+                netizenHits++;
                 damageTracker[n.name] = (damageTracker[n.name] || 0) + dmg;
 
                 const el = document.getElementById(n.id);
@@ -606,9 +622,9 @@
 
             setTimeout(() => {
                 b.currentHp -= totalDmg;
-                playPunch();
-                const bossBody = document.getElementById('boss-body');
+                if(netizenHits > 0) triggerCombo(netizenHits); // Add combo counter
                 
+                const bossBody = document.getElementById('boss-body');
                 bossBody.classList.remove('idle-bob');
                 bossBody.classList.add('anim-hit-left'); 
                 
@@ -626,6 +642,7 @@
                     return;
                 }
 
+                // Boss Balasan
                 setTimeout(() => {
                     if(b.currentHp <= 0 || netizens.length === 0) return;
 
@@ -640,7 +657,6 @@
                     let deadCount = 0;
 
                     if(isUlt) {
-                        playUlt();
                         const dmg = Math.floor(b.atk * b.ultMult);
                         const ultText = document.getElementById('ult-text');
                         ultText.innerText = b.ultName;
@@ -649,9 +665,11 @@
                         ultText.classList.add('ult-active');
                         document.getElementById('combat-log').innerText = `⚠️ ${b.name} MENGELUARKAN ${b.ultName}!!`;
                         
+                        document.getElementById('arenaMain').classList.add('camera-shake');
+                        setTimeout(() => document.getElementById('arenaMain').classList.remove('camera-shake'), 400);
+                        
                         netizens.forEach(n => { n.currentHp -= dmg; });
                     } else {
-                        playPunch();
                         const targets = Math.min(netizens.length, Math.floor(Math.random() * 3) + 1);
                         document.getElementById('combat-log').innerText = `${b.name} membalas pukulan brutal ke ${targets} netizen!`;
                         for(let i=0; i<targets; i++) {
@@ -666,7 +684,6 @@
 
                         if(n.currentHp <= 0) {
                             graveyard.unshift({ name: n.name, isSultan: n.isSultan, dmg: damageTracker[n.name] || 0 });
-                            
                             el.classList.add('anim-die');
                             setTimeout(() => el.remove(), 600);
                             deadCount++;
@@ -690,7 +707,6 @@
                     if(deadCount > 0) {
                         setTimeout(() => {
                             document.getElementById('combat-log').innerText = `💀 ${deadCount} netizen gugur... Butuh bantuan!`;
-                            if(netizens.length === 0) playKO();
                         }, 1200);
                     }
                 }, 1000); 
@@ -700,15 +716,16 @@
 
         function handleBossDeath() {
             b.currentHp = 0; updateBossHP();
-            playKO();
             document.getElementById('boss-body').classList.remove('idle-bob');
             document.getElementById('boss-body').classList.add('anim-die');
             document.getElementById('combat-log').innerText = `👑 ${b.name} TUMBANG DIKEROYOK PASUKAN!`;
             
+            speakComentator(`Luar biasa! Pejabat ${b.name} berhasil ditumbangkan oleh netizen!`);
+            
             setTimeout(() => {
                 currentBossIdx++;
                 loadBoss(currentBossIdx);
-            }, 3500);
+            }, 4000);
         }
 
         // --- GRAVEYARD MODAL & AUTO SYSTEM ---
@@ -724,18 +741,14 @@
                     <div class="grave-stone ${g.isSultan ? 'sultan' : ''}">
                         <div class="grave-icon">🪦</div>
                         <div class="grave-name" title="${g.name}">${g.name}</div>
-                        <div class="grave-stat">⚔️ ${g.dmg.toLocaleString('id-ID')} Dmg</div>
+                        <div class="grave-stat">⚔️ ${g.dmg.toLocaleString('id-ID')}</div>
                     </div>
                 `).join('');
             }
 
             isGraveShowing = true;
             modal.classList.add('show');
-            
-            setTimeout(() => {
-                modal.classList.remove('show');
-                isGraveShowing = false;
-            }, 6000); // Muncul selama 6 detik lalu hilang
+            setTimeout(() => { modal.classList.remove('show'); isGraveShowing = false; }, 6000); 
         }
 
         function toggleAutoGrave() {
@@ -745,10 +758,7 @@
             if(isAutoGrave) {
                 btn.innerText = "AUTO: ON 🟢";
                 btn.classList.add('btn-auto-active');
-                // Tampilkan kuburan tiap 45 detik
-                autoGraveInterval = setInterval(() => {
-                    if(graveyard.length > 0) showGraveyard();
-                }, 45000); 
+                autoGraveInterval = setInterval(() => { if(graveyard.length > 0) showGraveyard(); }, 45000); 
             } else {
                 btn.innerText = "AUTO: OFF 🔴";
                 btn.classList.remove('btn-auto-active');
