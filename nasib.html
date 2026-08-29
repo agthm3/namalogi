@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detektor Nasib - Kosmik AI</title>
+    <style>
+        :root {
+            --bg-color: #08090d;
+            --card-bg: rgba(20, 27, 38, 0.75);
+            --primary: #9d4edd;
+            --secondary: #c77dff;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(157, 78, 221, 0.25);
+            --glow-primary: rgba(157, 78, 221, 0.4);
+            --accent-gold: #ffb703;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main); min-height: 100vh;
+            display: flex; flex-direction: column; overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 20%, rgba(157, 78, 221, 0.08), transparent 50%);
+            background-attachment: fixed;
+        }
+
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+        header {
+            position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; background: rgba(8, 9, 13, 0.6); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-ctrl {
+            padding: 10px 18px; font-size: 0.85rem; font-weight: 700; color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px; cursor: pointer; transition: all 0.3s; display: inline-flex; gap: 8px; text-decoration: none;
+        }
+        .btn-ctrl:hover { background: rgba(157, 78, 221, 0.15); border-color: var(--primary); color: var(--secondary); }
+        .btn-ctrl.active { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--glow-primary); border-color: var(--primary); }
+
+        main.container {
+            position: relative; z-index: 10; max-width: 900px; margin: 40px auto; padding: 20px;
+            text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* --- PHASE PANELS --- */
+        .phase-panel { display: none; animation: fadeIn 0.5s ease; }
+        .phase-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .game-icon { font-size: 4.5rem; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--primary)); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .main-title { font-size: 3.2rem; font-weight: 900; text-transform: uppercase; color: var(--secondary); text-shadow: 0 0 20px var(--glow-primary); margin-bottom: 10px; }
+        .subtitle { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+
+        /* --- INPUT --- */
+        .input-group { margin: 30px 0; }
+        input[type="text"] {
+            width: 100%; max-width: 450px; padding: 18px 25px; font-size: 1.5rem; text-align: center;
+            background: rgba(0, 0, 0, 0.5); border: 2px solid var(--primary); color: #fff;
+            border-radius: 12px; outline: none; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--secondary); box-shadow: 0 0 20px var(--glow-primary); }
+
+        .btn-primary {
+            padding: 16px 35px; font-size: 1.2rem; font-weight: bold; background: var(--primary); color: #fff;
+            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 20px var(--glow-primary); transition: all 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); background: var(--secondary); box-shadow: 0 0 30px var(--secondary); }
+
+        /* --- LOADING --- */
+        .scanner-ring {
+            width: 130px; height: 130px; border: 4px dashed rgba(255,255,255,0.2);
+            border-radius: 50%; animation: spin 4s linear infinite; margin: 0 auto 30px; position: relative;
+        }
+        .scanner-ring::after {
+            content: '🔮'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 3rem; animation: pulse 1s infinite alternate reverse;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); } 100% { transform: translate(-50%, -50%) scale(1.2); filter: brightness(1.5); } }
+        
+        .loading-text { font-size: 1.5rem; color: var(--secondary); font-weight: bold; min-height: 40px; letter-spacing: 2px; }
+        .progress-bar { width: 100%; max-width: 400px; height: 12px; background: #222; border-radius: 6px; margin: 20px auto; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.2s; box-shadow: 0 0 15px var(--secondary); }
+        .loading-pct { font-size: 2rem; font-weight: bold; margin-top: 10px; color: var(--text-main); }
+
+        /* --- RESULT --- */
+        .result-card {
+            background: var(--card-bg); border: 2px solid var(--primary); border-radius: 20px;
+            padding: 40px 30px; backdrop-filter: blur(15px); box-shadow: 0 0 40px rgba(157, 78, 221, 0.2);
+            margin-bottom: 30px;
+        }
+        .r-label { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .r-name { font-size: 1.8rem; font-weight: bold; color: var(--secondary); margin-bottom: 30px; text-transform: uppercase; }
+        
+        .nasib-box { background: rgba(255, 183, 3, 0.1); border: 2px solid var(--accent-gold); padding: 30px 20px; border-radius: 15px; margin-bottom: 35px; box-shadow: inset 0 0 20px rgba(255, 183, 3, 0.1); }
+        .r-nasib { font-size: 3rem; font-weight: 900; color: var(--accent-gold); text-shadow: 0 0 20px rgba(255, 183, 3, 0.5); line-height: 1.2; text-transform: uppercase; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-box { background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: left; position: relative; overflow: hidden; }
+        .stat-box::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--secondary); }
+        .s-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .s-title { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+        .s-val { font-size: 1.8rem; font-weight: bold; color: #fff; }
+        .s-desc { font-size: 0.9rem; color: #aaa; line-height: 1.4; }
+
+        .action-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+
+        /* --- STREAM MODE --- */
+        body.stream-mode main.container { max-width: 1400px; transform: scale(1.1); margin-top: 60px; }
+        body.stream-mode .main-title { font-size: 4rem; }
+        body.stream-mode input[type="text"] { font-size: 2rem; max-width: 600px; padding: 25px; }
+        body.stream-mode .r-nasib { font-size: 4rem; }
+        body.stream-mode .s-desc { font-size: 1.1rem; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .r-nasib { font-size: 2rem; }
+            header { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <header>
+        <div>
+            <a href="index.html" class="btn-ctrl">← KEMBALI</a>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-ctrl" id="btn-stream" onclick="toggleStreamMode()">🎥 STREAM MODE</button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()">🖥 FULLSCREEN</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- PHASE 1: INPUT -->
+        <div id="phase-input" class="phase-panel active">
+            <div class="game-icon">🔮</div>
+            <h1 class="main-title">Detektor Nasib</h1>
+            <p class="subtitle">Lihat kemungkinan masa depan paling epik dan absurd dalam garis kehidupanmu!</p>
+            
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Ketik Nama Di Sini" autocomplete="off" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-primary" onclick="startAnalysis()">🔮 BACA NASIB</button>
+        </div>
+
+        <!-- PHASE 2: LOADING -->
+        <div id="phase-loading" class="phase-panel">
+            <div class="scanner-ring"></div>
+            <div class="loading-text" id="loadingText">Membuka portal masa depan...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="loading-pct" id="loadingPct">0%</div>
+        </div>
+
+        <!-- PHASE 3: RESULT -->
+        <div id="phase-result" class="phase-panel">
+            <div class="result-card">
+                <div class="r-label">BUKU TAKDIR MENCATAT...</div>
+                <div class="r-name" id="resName">NASIB NAMA</div>
+                
+                <div class="nasib-box">
+                    <div class="r-label" style="color: rgba(255, 183, 3, 0.7); margin-bottom: 10px;">🔥 NASIB PALING MUNGKIN 🔥</div>
+                    <div class="r-nasib" id="resNasib">HASIL NASIB</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="s-header">
+                            <div class="s-title">💰 Keuangan</div>
+                            <div class="s-val" id="valKeuangan">0%</div>
+                        </div>
+                        <div class="s-desc" id="descKeuangan">Deskripsi</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-header">
+                            <div class="s-title">❤️ Percintaan</div>
+                            <div class="s-val" id="valCinta">0%</div>
+                        </div>
+                        <div class="s-desc" id="descCinta">Deskripsi</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-header">
+                            <div class="s-title">🧠 Kecerdasan</div>
+                            <div class="s-val" id="valOtak">0%</div>
+                        </div>
+                        <div class="s-desc" id="descOtak">Deskripsi</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-header">
+                            <div class="s-title">🍀 Keberuntungan</div>
+                            <div class="s-val" id="valHoki">0%</div>
+                        </div>
+                        <div class="s-desc" id="descHoki">Deskripsi</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="resetGame()">🔄 Coba Nama Lain</button>
+                <a href="index.html" class="btn-ctrl" style="padding: 16px 30px; font-size: 1.1rem;">🏠 Menu Utama</a>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666;">Hanya untuk hiburan • Jangan dianggap serius 😂</div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATABASE NASIB ---
+        const dbNasib = [
+            "Kaya raya tapi tetap susah bangun pagi", "Viral karena hal yang tidak disengaja", 
+            "Ketemu jodoh saat ngantre makanan", "Mendadak kaya tetapi tetap lupa bawa dompet", 
+            "Menjadi terkenal di kampung sendiri", "Dapat rezeki nomplok saat tidak mencarinya", 
+            "Selalu berhasil menemukan tempat parkir VIP", "Kehilangan sandal sebelah di masjid", 
+            "Menjadi bos besar di perusahaan tetangga", "Tetap menjadi anak kesayangan mama sampai tua", 
+            "Menang undian hadiah yang tidak pernah diikuti", "Memiliki musuh yang ternyata penggemar rahasia", 
+            "Jadi sultan tapi pelit beli kuota internet", "Menemukan uang 100 ribu di saku celana lama", 
+            "Dinotice artis idola tapi pas lagi pose ngupil", "Dapat warisan dari paman fiktif di luar negeri", 
+            "Tersandung batu tapi gayanya tetap keren", "Ditaksir kasir minimarket dekat rumah", 
+            "Salah masuk toilet umum tapi pura-pura buta huruf", "HP jatuh dari motor tapi layarnya nggak pecah", 
+            "Ketahuan kentut di dalam lift yang penuh", "Terpilih jadi ketua RT secara aklamasi", 
+            "Diajak foto bareng artis karena dikira asistennya", "Menemukan harta karun di bawah kasur kosan", 
+            "Menjadi legenda hidup di grup WhatsApp keluarga", "Menang doorprize panci presto anti lengket", 
+            "Beli baju online diskon besar dan ukurannya pas", "Makan di restoran mahal terus dibayarin teman", 
+            "Tidak sengaja pakai baju couple sama musuh bebuyutan", "Tidur siang sebentar tapi bablas sampai besoknya", 
+            "Disapa mantan saat dompet lagi tipis-tipisnya", "Diundang ke podcast Deddy Corbuzier (dalam mimpi)", 
+            "Menyelamatkan dunia dari kebosanan", "Sukses besar lewat jalur ordal", 
+            "Diangkat anak oleh sultan minyak tanah", "Ketemu alien tapi aliennya minta foto selfie", 
+            "Masuk TV nasional karena pakai baju kebalik", "Disangka intel gara-gara suka nongkrong pakai kacamata hitam", 
+            "Menjadi inspirasi meme nasional viral", "Menemukan cinta sejati di kolom komentar TikTok", 
+            "Dapat uang kaget tapi bingung cara ngabisinnya", "Beli gorengan 2000 tapi dapet bonus 2 biji", 
+            "Bisa beli rumah mewah dari hasil ngepet (di The Sims)", "Berjodoh dengan teman SD yang dulu sering diejek", 
+            "Menjadi miliarder gara-gara ternak lele digital", "Sering dikira mahasiswa baru padahal udah sering encok",
+            "Mendadak diangkat jadi komisaris perusahaan angin ribut", "Selamat dari razia karena nyelip di belakang truk",
+            "Makan sepuasnya di kondangan orang yang nggak dikenal", "Dikejar anjing tapi malah mecahin rekor lari sprint"
+        ];
+
+        // --- HASHING & PRNG ---
+        function cyrb128(str) {
+            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+            for (let i = 0, k; i < str.length; i++) {
+                k = str.charCodeAt(i);
+                h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+            }
+            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+            h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179); h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
+            return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+        }
+
+        function sfc32(a, b, c, d) {
+            return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+                let t = (a + b) | 0;
+                a = b ^ b >>> 9; b = c + (c << 3) | 0; c = (c << 21 | c >>> 11); d = d + 1 | 0;
+                t = t + d | 0; c = c + t | 0; return (t >>> 0) / 4294967296;
+            }
+        }
+
+        function createPRNG(seedStr) {
+            const normalized = seedStr.trim().toLowerCase().replace(/\s+/g, ' ');
+            const seed = cyrb128(normalized);
+            return sfc32(seed[0], seed[1], seed[2], seed[3]);
+        }
+
+        function randInt(min, max, prng) { return Math.floor(prng() * (max - min + 1)) + min; }
+        function randItem(arr, prng) { return arr[randInt(0, arr.length - 1, prng)]; }
+
+        // --- GAME LOGIC ---
+        function switchPhase(phaseId) {
+            document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(phaseId).classList.add('active');
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') startAnalysis(); }
+
+        function resetGame() {
+            document.getElementById('playerName').value = '';
+            switchPhase('phase-input');
+            document.getElementById('playerName').focus();
+        }
+
+        function startAnalysis() {
+            const nameInput = document.getElementById('playerName').value;
+            if (!nameInput.trim()) { alert("Masukkan nama terlebih dahulu!"); return; }
+
+            switchPhase('phase-loading');
+            
+            const loadTexts = [
+                "Membuka portal masa depan...", 
+                "Membaca garis kehidupan...", 
+                "Mendeteksi energi keberuntungan...", 
+                "Mengakses kemungkinan dari semesta paralel..."
+            ];
+            
+            let textEl = document.getElementById('loadingText');
+            let fillEl = document.getElementById('progressFill');
+            let pctEl = document.getElementById('loadingPct');
+            
+            let progress = 0; let textIdx = 0;
+            textEl.innerText = loadTexts[0];
+            
+            let textInterval = setInterval(() => {
+                textIdx = (textIdx + 1) % loadTexts.length;
+                textEl.innerText = loadTexts[textIdx];
+            }, 900);
+
+            let progressInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 7) + 2;
+                if (progress >= 100) progress = 100;
+                
+                fillEl.style.width = progress + "%";
+                pctEl.innerText = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(textInterval); clearInterval(progressInterval);
+                    setTimeout(() => generateResult(nameInput), 600);
+                }
+            }, 150);
+        }
+
+        function generateResult(name) {
+            const prng = createPRNG(name);
+            
+            const nasib = randItem(dbNasib, prng);
+            const uang = randInt(15, 99, prng);
+            const cinta = randInt(10, 99, prng);
+            const otak = randInt(40, 99, prng);
+            const hoki = randInt(20, 99, prng);
+            
+            // Dynamic Descriptions based on score
+            let descUang = uang > 80 ? "Potensi rezeki gila-gilaan, tapi sistem mendeteksi uangmu sering bocor buat jajan." : "Lebih sering jadi tim hore pas temen pada gajian. Harus ekstra hemat!";
+            let descCinta = cinta > 75 ? "Banyak yang naksir diem-diem, sayangnya radar kepekaan kamu setingkat sinyal EDGE." : "Cintamu sering bertepuk sebelah tangan atau nyasar ke orang yang salah.";
+            let descOtak = otak > 85 ? "Pintar menyerap informasi, tapi anehnya sering lupa meletakkan HP dan kunci motor." : "Cerdas dalam teori, tapi sering panik saat disuruh praktek di lapangan.";
+            let descHoki = hoki > 80 ? "Selalu berhasil lolos dari kesialan di detik-detik terakhir. Punya nyawa cadangan!" : "Sering jadi tumbal kalau lagi nongkrong bareng teman. Sabar ya.";
+
+            // Render UI
+            document.getElementById('resName').innerText = `NASIB ${name}`;
+            document.getElementById('resNasib').innerText = `"${nasib}"`;
+            
+            document.getElementById('valKeuangan').innerText = uang + "%";
+            document.getElementById('descKeuangan').innerText = descUang;
+            
+            document.getElementById('valCinta').innerText = cinta + "%";
+            document.getElementById('descCinta').innerText = descCinta;
+            
+            document.getElementById('valOtak').innerText = otak + "%";
+            document.getElementById('descOtak').innerText = descOtak;
+            
+            document.getElementById('valHoki').innerText = hoki + "%";
+            document.getElementById('descHoki').innerText = descHoki;
+
+            switchPhase('phase-result');
+        }
+
+        // --- GLOBAL CONTROLS & PARTICLES ---
+        function toggleStreamMode() {
+            const body = document.body; const btn = document.getElementById('btn-stream');
+            body.classList.toggle('stream-mode');
+            localStorage.setItem('tiktok_stream_mode', body.classList.contains('stream-mode'));
+            btn.classList.toggle('active', body.classList.contains('stream-mode'));
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('tiktok_stream_mode') === 'true') {
+                document.body.classList.add('stream-mode');
+                document.getElementById('btn-stream').classList.add('active');
+            }
+            initParticles(); animateParticles();
+            document.getElementById('playerName').focus();
+        });
+
+        const canvas = document.getElementById('particle-canvas'); const ctx = canvas.getContext('2d');
+        let particles = [];
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5; this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = (Math.random() - 0.5) * -0.6; // Partikel naik ke atas ala sihir
+                this.alpha = Math.random() * 0.5 + 0.2;
+                this.color = Math.random() > 0.5 ? '#9d4edd' : '#c77dff';
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        function initParticles() { for (let i = 0; i < (canvas.width * canvas.height)/10000; i++) particles.push(new Particle()); }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+    </script>
+</body>
+</html>

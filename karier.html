@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karier Masa Depan - Kosmik AI</title>
+    <style>
+        :root {
+            --bg-color: #08090d;
+            --card-bg: rgba(20, 27, 38, 0.75);
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(0, 242, 254, 0.25);
+            --glow-primary: rgba(0, 242, 254, 0.4);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main); min-height: 100vh;
+            display: flex; flex-direction: column; overflow-x: hidden;
+            background-image: radial-gradient(circle at 20% 20%, rgba(0, 242, 254, 0.08), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+        header {
+            position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; background: rgba(8, 9, 13, 0.6); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-ctrl {
+            padding: 10px 18px; font-size: 0.85rem; font-weight: 700; color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px; cursor: pointer; transition: all 0.3s; display: inline-flex; gap: 8px; text-decoration: none;
+        }
+        .btn-ctrl:hover { background: rgba(0, 242, 254, 0.15); border-color: var(--primary); color: var(--primary); }
+        .btn-ctrl.active { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--glow-primary); }
+
+        main.container {
+            position: relative; z-index: 10; max-width: 900px; margin: 40px auto; padding: 20px;
+            text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* --- PHASE PANELS --- */
+        .phase-panel { display: none; animation: fadeIn 0.5s ease; }
+        .phase-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .game-icon { font-size: 4rem; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--primary)); }
+        .main-title { font-size: 3rem; font-weight: 900; text-transform: uppercase; color: var(--primary); text-shadow: 0 0 20px var(--glow-primary); margin-bottom: 10px; }
+        .subtitle { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+
+        /* --- INPUT --- */
+        .input-group { margin: 30px 0; }
+        input[type="text"] {
+            width: 100%; max-width: 450px; padding: 18px 25px; font-size: 1.5rem; text-align: center;
+            background: rgba(0, 0, 0, 0.5); border: 2px solid var(--secondary); color: #fff;
+            border-radius: 12px; outline: none; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 20px var(--glow-primary); }
+
+        .btn-primary {
+            padding: 16px 35px; font-size: 1.2rem; font-weight: bold; background: var(--primary); color: #000;
+            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 20px var(--glow-primary); transition: all 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 0 30px var(--primary); }
+
+        /* --- LOADING --- */
+        .scanner-ring {
+            width: 120px; height: 120px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 30px; position: relative;
+        }
+        .scanner-ring::after {
+            content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px;
+            border: 4px solid transparent; border-bottom-color: #ff007f; border-radius: 50%; animation: spin 2s linear infinite reverse;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loading-text { font-size: 1.5rem; color: var(--primary); font-weight: bold; min-height: 40px; letter-spacing: 2px; }
+        .progress-bar { width: 100%; max-width: 400px; height: 10px; background: #222; border-radius: 5px; margin: 20px auto; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.2s; box-shadow: 0 0 10px var(--primary); }
+        .loading-pct { font-size: 2rem; font-weight: bold; margin-top: 10px; }
+
+        /* --- RESULT --- */
+        .result-card {
+            background: var(--card-bg); border: 2px solid var(--primary); border-radius: 20px;
+            padding: 40px 30px; backdrop-filter: blur(15px); box-shadow: 0 0 40px rgba(0, 242, 254, 0.2);
+            margin-bottom: 30px;
+        }
+        .r-label { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .r-name { font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 25px; text-transform: uppercase; }
+        .r-profesi { font-size: 3.5rem; font-weight: 900; color: #ffb703; text-shadow: 0 0 20px rgba(255, 183, 3, 0.4); margin-bottom: 30px; line-height: 1.1; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: rgba(0,0,0,0.4); padding: 20px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .s-val { font-size: 2.2rem; font-weight: bold; color: var(--primary); }
+        .s-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; }
+        
+        .salary-box { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+        .salary-val { font-size: 2rem; color: #10b981; font-weight: bold; }
+        
+        .r-desc {
+            font-size: 1.2rem; line-height: 1.6; font-style: italic; color: #fff;
+            background: rgba(255,0,127,0.1); padding: 20px; border-left: 4px solid #ff007f; border-radius: 0 10px 10px 0;
+        }
+
+        .action-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+
+        /* --- STREAM MODE --- */
+        body.stream-mode main.container { max-width: 1400px; transform: scale(1.1); margin-top: 60px; }
+        body.stream-mode .main-title { font-size: 4rem; }
+        body.stream-mode input[type="text"] { font-size: 2rem; max-width: 600px; padding: 25px; }
+        body.stream-mode .r-profesi { font-size: 4.5rem; }
+        body.stream-mode .r-desc { font-size: 1.5rem; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .r-profesi { font-size: 2.5rem; }
+            header { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <header>
+        <div>
+            <a href="index.html" class="btn-ctrl">← KEMBALI</a>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-ctrl" id="btn-stream" onclick="toggleStreamMode()">🎥 STREAM MODE</button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()">🖥 FULLSCREEN</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- PHASE 1: INPUT -->
+        <div id="phase-input" class="phase-panel active">
+            <div class="game-icon">👔</div>
+            <h1 class="main-title">Karier Masa Depan</h1>
+            <p class="subtitle">Masukkan namamu dan biarkan sistem memindai potensi masa depanmu.</p>
+            
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Ketik Nama Di Sini" autocomplete="off" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-primary" onclick="startAnalysis()">🔍 Analisis Karier</button>
+        </div>
+
+        <!-- PHASE 2: LOADING -->
+        <div id="phase-loading" class="phase-panel">
+            <div class="scanner-ring"></div>
+            <div class="loading-text" id="loadingText">Memindai identitas...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="loading-pct" id="loadingPct">0%</div>
+        </div>
+
+        <!-- PHASE 3: RESULT -->
+        <div id="phase-result" class="phase-panel">
+            <div class="result-card">
+                <div class="r-label">HASIL ANALISIS SISTEM</div>
+                <div class="r-name" id="resName">NAMA</div>
+                
+                <div class="r-profesi" id="resProfesi">PROFESI</div>
+                
+                <div class="salary-box">
+                    <div class="r-label">💰 Potensi Penghasilan</div>
+                    <div class="salary-val" id="resSalary">Rp0</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="s-val" id="resMatch">0%</div>
+                        <div class="s-title">🎯 Kecocokan</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-val" id="resSuccess">0%</div>
+                        <div class="s-title">📈 Peluang Sukses</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-val" id="resStress">0%</div>
+                        <div class="s-title">😵 Tingkat Stres</div>
+                    </div>
+                </div>
+
+                <div class="r-desc" id="resDesc">Deskripsi hasil akan muncul di sini.</div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="resetGame()">🔄 Coba Nama Lain</button>
+                <a href="index.html" class="btn-ctrl" style="padding: 16px 30px; font-size: 1.1rem;">🏠 Menu Utama</a>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666;">Hanya untuk hiburan • Jangan dianggap serius 😂</div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATABASE PROFESI ---
+        const dbProfesi = [
+            "Polisi", "Dokter", "Programmer", "Pengusaha", "Astronot", "Pilot", "Bankir", "Chef", "Guru", 
+            "Ahli Geologi", "Pegawai BRIDA", "Pemilik Toko Mainan Edukasi", "CPNS Teladan", "Kepala Dinas",
+            "Petani Modern", "Nelayan Profesional", "Tukang Bakso Granat", "Penjaga Parkir VIP", "Supir Truk Lintas Provinsi", 
+            "Influencer Viral", "Pemilik Warung Kopi", "Kolektor Mainan", "Penjaga Kebun Binatang", "Pemburu Harta Karun", 
+            "CEO Startup", "Dukun Hujan (Pawang Cuaca)", "Penguji Kasur Empuk", "Profesional Rebahan", "Pemburu Diskon", 
+            "Tester Makanan Kucing", "Ahli Mencari Charger", "Pengamat Tetangga", "Intel Pasar Malam", "Pelatih Nyamuk", 
+            "Duta Kondangan", "Penikmat Kopi Saset", "Ahli Pura-pura Sibuk", "Pengatur Suhu AC Kantor", "Inspektur Gorengan", 
+            "Konsultan Cinta (Tapi Jomblo)", "Pencari WiFi Gratis", "Atlet Esport Kapan-kapan", "Pawang Kucing Liar", 
+            "Pemasang Galon", "Penemu Remot TV", "Tukang Tidur Profesional", "Pengkritik Sinetron", "Presiden Direktur",
+            "Ahli Susun Laporan Latsar", "Desainer Maskot Instansi", "Editor Foto Pejabat", "Tukang Hapus Background Foto"
+        ];
+
+        // --- HASHING & PRNG (Pseudo-Random Number Generator) ---
+        function cyrb128(str) {
+            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+            for (let i = 0, k; i < str.length; i++) {
+                k = str.charCodeAt(i);
+                h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+            }
+            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+            h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179); h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
+            return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+        }
+
+        function sfc32(a, b, c, d) {
+            return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+                let t = (a + b) | 0;
+                a = b ^ b >>> 9; b = c + (c << 3) | 0; c = (c << 21 | c >>> 11); d = d + 1 | 0;
+                t = t + d | 0; c = c + t | 0; return (t >>> 0) / 4294967296;
+            }
+        }
+
+        function createPRNG(seedStr) {
+            const normalized = seedStr.trim().toLowerCase().replace(/\s+/g, ' ');
+            const seed = cyrb128(normalized);
+            return sfc32(seed[0], seed[1], seed[2], seed[3]);
+        }
+
+        function randInt(min, max, prng) { return Math.floor(prng() * (max - min + 1)) + min; }
+        function randItem(arr, prng) { return arr[randInt(0, arr.length - 1, prng)]; }
+
+        // --- GAME LOGIC ---
+        function switchPhase(phaseId) {
+            document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(phaseId).classList.add('active');
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') startAnalysis();
+        }
+
+        function resetGame() {
+            document.getElementById('playerName').value = '';
+            switchPhase('phase-input');
+            document.getElementById('playerName').focus();
+        }
+
+        function startAnalysis() {
+            const nameInput = document.getElementById('playerName').value;
+            if (!nameInput.trim()) {
+                alert("Masukkan nama terlebih dahulu!");
+                return;
+            }
+
+            switchPhase('phase-loading');
+            
+            const loadTexts = [
+                "Memindai identitas...", 
+                "Menganalisis karakter...", 
+                "Mencocokkan potensi...", 
+                "Mengakses database profesi...", 
+                "Menghitung peluang masa depan..."
+            ];
+            
+            let textEl = document.getElementById('loadingText');
+            let fillEl = document.getElementById('progressFill');
+            let pctEl = document.getElementById('loadingPct');
+            
+            let progress = 0;
+            let textIdx = 0;
+            textEl.innerText = loadTexts[0];
+            
+            // Animasi Loading
+            let textInterval = setInterval(() => {
+                textIdx = (textIdx + 1) % loadTexts.length;
+                textEl.innerText = loadTexts[textIdx];
+            }, 800);
+
+            let progressInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 8) + 2;
+                if (progress >= 100) progress = 100;
+                
+                fillEl.style.width = progress + "%";
+                pctEl.innerText = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(textInterval);
+                    clearInterval(progressInterval);
+                    setTimeout(() => generateResult(nameInput), 500);
+                }
+            }, 150);
+        }
+
+        function generateResult(name) {
+            const prng = createPRNG(name);
+            
+            const profesi = randItem(dbProfesi, prng);
+            const match = randInt(65, 99, prng);
+            const success = randInt(50, 99, prng);
+            const stress = randInt(10, 99, prng);
+            
+            // Format Gaji
+            const gajiBawah = randInt(1, 15, prng);
+            const gajiAtas = gajiBawah + randInt(5, 50, prng);
+            
+            // Deskripsi Dinamis
+            let desc = `Berdasarkan kalkulasi matriks kosmik, aura namamu sangat kuat beresonansi dengan profesi ini. Potensimu luar biasa, asal tidak gampang mengeluh!`;
+            
+            if (stress > 85) {
+                desc = `Karier ini akan membuat dompetmu tebal, tapi sistem mendeteksi kamu rentan mengalami rambut rontok karena stres. Jangan lupa ngopi!`;
+            } else if (match > 95) {
+                desc = `Kecocokan mutlak! Semesta memanggilmu untuk bidang ini. Jika kamu belum menekuninya, sekarang adalah saat yang tepat.`;
+            } else if (profesi.includes("Tidur") || profesi.includes("Rebahan")) {
+                desc = `Sistem mendeteksi bahwa hobi utamamu sangat sejalan dengan potensi karier ini. Lanjutkan mimpimu (secara harfiah)!`;
+            }
+
+            // Render Data
+            document.getElementById('resName').innerText = name;
+            document.getElementById('resProfesi').innerText = profesi;
+            document.getElementById('resMatch').innerText = match + "%";
+            document.getElementById('resSuccess').innerText = success + "%";
+            document.getElementById('resStress').innerText = stress + "%";
+            document.getElementById('resSalary').innerText = `Rp${gajiBawah} Juta – Rp${gajiAtas} Juta/Bulan`;
+            document.getElementById('resDesc').innerText = `"${desc}"`;
+
+            switchPhase('phase-result');
+        }
+
+        // --- GLOBAL CONTROLS & PARTICLES ---
+        function toggleStreamMode() {
+            const body = document.body;
+            const btn = document.getElementById('btn-stream');
+            body.classList.toggle('stream-mode');
+            localStorage.setItem('tiktok_stream_mode', body.classList.contains('stream-mode'));
+            btn.classList.toggle('active', body.classList.contains('stream-mode'));
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        // Init stream mode from previous page
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('tiktok_stream_mode') === 'true') {
+                document.body.classList.add('stream-mode');
+                document.getElementById('btn-stream').classList.add('active');
+            }
+            initParticles();
+            animateParticles();
+            document.getElementById('playerName').focus();
+        });
+
+        // Background Particles
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5; this.speedX = (Math.random() - 0.5) * 0.4;
+                this.speedY = (Math.random() - 0.5) * 0.4; this.alpha = Math.random() * 0.5 + 0.2;
+                this.color = Math.random() > 0.5 ? '#00f2fe' : '#ff007f';
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function initParticles() { for (let i = 0; i < (canvas.width * canvas.height)/12000; i++) particles.push(new Particle()); }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+    </script>
+</body>
+</html>

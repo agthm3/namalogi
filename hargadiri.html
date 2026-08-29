@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Valuasi & Harga Diri - Bursa Manusia AI</title>
+    <style>
+        :root {
+            --bg-color: #0a0904;
+            --card-bg: rgba(28, 24, 12, 0.78);
+            --primary: #ffd166;
+            --secondary: #f48c06;
+            --accent-green: #06d6a0;
+            --accent-red: #ef233c;
+            --text-main: #fcf6bd;
+            --text-muted: #a39b7d;
+            --glass-border: rgba(255, 209, 102, 0.25);
+            --glow-primary: rgba(255, 209, 102, 0.45);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main); min-height: 100vh;
+            display: flex; flex-direction: column; overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(255, 209, 102, 0.08), transparent 50%),
+                radial-gradient(circle at 10% 90%, rgba(244, 140, 6, 0.08), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+        header {
+            position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; background: rgba(10, 9, 4, 0.6); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-ctrl {
+            padding: 10px 18px; font-size: 0.85rem; font-weight: 700; color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px; cursor: pointer; transition: all 0.3s; display: inline-flex; gap: 8px; text-decoration: none;
+        }
+        .btn-ctrl:hover { background: rgba(255, 209, 102, 0.15); border-color: var(--primary); color: var(--primary); }
+        .btn-ctrl.active { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--glow-primary); border-color: var(--primary); }
+
+        main.container {
+            position: relative; z-index: 10; max-width: 900px; margin: 40px auto; padding: 20px;
+            text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* --- PHASE PANELS --- */
+        .phase-panel { display: none; animation: fadeIn 0.5s ease; }
+        .phase-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .game-icon { font-size: 4.5rem; margin-bottom: 15px; filter: drop-shadow(0 0 20px var(--primary)); animation: coinFlip 3s ease-in-out infinite; }
+        @keyframes coinFlip { 0%, 100% { transform: translateY(0) rotateY(0deg); } 50% { transform: translateY(-10px) rotateY(180deg); } }
+        
+        .main-title { font-size: 3.2rem; font-weight: 900; text-transform: uppercase; color: var(--primary); text-shadow: 0 0 25px var(--glow-primary); margin-bottom: 10px; }
+        .subtitle { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+
+        /* --- INPUT --- */
+        .input-group { margin: 30px 0; }
+        input[type="text"] {
+            width: 100%; max-width: 450px; padding: 18px 25px; font-size: 1.5rem; text-align: center;
+            background: rgba(0, 0, 0, 0.6); border: 2px solid var(--secondary); color: #fff;
+            border-radius: 12px; outline: none; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 25px var(--glow-primary); }
+
+        .btn-primary {
+            padding: 16px 35px; font-size: 1.2rem; font-weight: bold; background: var(--primary); color: #000;
+            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 25px var(--glow-primary); transition: all 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); background: #ffe066; box-shadow: 0 0 35px var(--primary); }
+
+        /* --- LOADING VALUATION --- */
+        .market-scanner {
+            width: 150px; height: 150px; border: 3px solid rgba(255, 209, 102, 0.2); border-radius: 50%;
+            margin: 0 auto 30px; position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        .market-scanner::before {
+            content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
+            border: 3px dashed var(--primary); border-radius: 50%; animation: spin 5s linear infinite;
+        }
+        .stock-ticker { font-size: 3rem; animation: pulsePrice 1s infinite alternate; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulsePrice { from { transform: scale(0.9); opacity: 0.7; } to { transform: scale(1.15); opacity: 1; } }
+
+        .loading-text { font-size: 1.5rem; color: var(--primary); font-weight: bold; min-height: 40px; letter-spacing: 2px; }
+        .progress-bar { width: 100%; max-width: 400px; height: 12px; background: #111; border-radius: 6px; margin: 20px auto; overflow: hidden; border: 1px solid rgba(255, 209, 102, 0.3); }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width 0.1s linear; box-shadow: 0 0 15px var(--primary); }
+        .loading-pct { font-size: 2rem; font-weight: bold; margin-top: 10px; color: #fff; }
+
+        /* --- RESULT --- */
+        .result-card {
+            background: var(--card-bg); border: 2px solid var(--primary); border-radius: 20px;
+            padding: 40px 30px; backdrop-filter: blur(15px); box-shadow: 0 0 45px rgba(255, 209, 102, 0.2);
+            margin-bottom: 30px; position: relative;
+        }
+
+        .r-label { font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .r-name { font-size: 1.8rem; font-weight: bold; color: #fff; margin-bottom: 25px; text-transform: uppercase; }
+        
+        .price-box {
+            background: rgba(0,0,0,0.65); padding: 30px 20px; border-radius: 15px; margin-bottom: 30px;
+            border: 2px solid var(--primary); box-shadow: inset 0 0 25px rgba(255, 209, 102, 0.15);
+        }
+        .r-price { font-size: 3.2rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px rgba(255, 209, 102, 0.6); line-height: 1.2; }
+        .r-tag { display: inline-block; padding: 6px 16px; border-radius: 20px; background: rgba(6, 214, 160, 0.15); border: 1px solid var(--accent-green); color: var(--accent-green); font-size: 0.9rem; font-weight: bold; margin-top: 12px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: rgba(0,0,0,0.4); padding: 18px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+        .s-val { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+        .s-title { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+
+        .asset-box {
+            background: rgba(244, 140, 6, 0.12); border-left: 4px solid var(--secondary);
+            padding: 20px; border-radius: 0 10px 10px 0; text-align: left; margin-bottom: 20px;
+        }
+        .asset-title { font-size: 0.85rem; color: var(--secondary); text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .asset-text { font-size: 1.15rem; font-style: italic; color: #fff; line-height: 1.5; }
+
+        .r-desc {
+            font-size: 1.1rem; line-height: 1.6; color: var(--text-main); text-align: left;
+            background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .action-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+
+        /* --- STREAM MODE --- */
+        body.stream-mode main.container { max-width: 1400px; transform: scale(1.1); margin-top: 60px; }
+        body.stream-mode .main-title { font-size: 4.5rem; }
+        body.stream-mode input[type="text"] { font-size: 2rem; max-width: 600px; padding: 25px; }
+        body.stream-mode .r-price { font-size: 4.5rem; }
+        body.stream-mode .asset-text { font-size: 1.4rem; }
+        body.stream-mode .r-desc { font-size: 1.35rem; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .r-price { font-size: 2.2rem; }
+            header { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <header>
+        <div>
+            <a href="index.html" class="btn-ctrl">← KEMBALI</a>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-ctrl" id="btn-stream" onclick="toggleStreamMode()">🎥 STREAM MODE</button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()">🖥 FULLSCREEN</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- PHASE 1: INPUT -->
+        <div id="phase-input" class="phase-panel active">
+            <div class="game-icon">💸</div>
+            <h1 class="main-title">Kalkulator Valuasi</h1>
+            <p class="subtitle">Hitung estimasi nilai pasar, harga jual, dan aset bawaanmu di bursa transfer manusia internasional!</p>
+            
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Ketik Nama Penonton" autocomplete="off" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-primary" onclick="startAnalysis()">📊 HITUNG HARGA DIRI</button>
+        </div>
+
+        <!-- PHASE 2: LOADING -->
+        <div id="phase-loading" class="phase-panel">
+            <div class="market-scanner">
+                <div class="stock-ticker">📈</div>
+            </div>
+            <div class="loading-text" id="loadingText">Menghubungkan ke Bursa Manusia...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="loading-pct" id="loadingPct">0%</div>
+        </div>
+
+        <!-- PHASE 3: RESULT -->
+        <div id="phase-result" class="phase-panel">
+            <div class="result-card">
+                <div class="r-label">SERTIFIKAT VALUASI PASAR</div>
+                <div class="r-name" id="resName">SUBJEK: NAMA</div>
+                
+                <div class="price-box">
+                    <div class="r-label" style="color: rgba(255, 209, 102, 0.7); margin-bottom: 8px;">ESTIMASI NILAI PASAR (MARKET VALUE):</div>
+                    <div class="r-price" id="resPrice">Rp0</div>
+                    <div class="r-tag" id="resStatus">STATUS: SIAP DILELANG</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="s-val" id="valGengsi">0%</div>
+                        <div class="s-title">💎 Nilai Gengsi</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-val" id="valVisual">0%</div>
+                        <div class="s-title">✨ Daya Tarik Visual</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-val" id="valBeban">0%</div>
+                        <div class="s-title">📦 Beban Keluarga</div>
+                    </div>
+                </div>
+
+                <div class="asset-box">
+                    <div class="asset-title">🏷️ Aset Utama Penunjang Harga:</div>
+                    <div class="asset-text" id="resAsset">"..."</div>
+                </div>
+
+                <div class="r-desc" id="resDesc">
+                    Analisis pasar keuangan akan muncul di sini.
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="resetGame()">🔄 Cek Nama Lain</button>
+                <a href="index.html" class="btn-ctrl" style="padding: 16px 30px; font-size: 1.1rem; border-color: rgba(255,255,255,0.2);">🏠 Menu Utama</a>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666;">Valuasi ini bersifat fiktif & semata-mata untuk hiburan TikTok Live 😂</div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATABASE VALUASI & ASET ABSURD ---
+        const dbTipeHarga = [
+            { nominal: "Rp12.500", note: "(Bisa nego tipis, bonus gantungan kunci)" },
+            { nominal: "Rp45.000.000.000", note: "(Tapi pembayarannya wajib pakai daun jati kering)" },
+            { nominal: "Rp2.000", note: "(Harga promo flash sale jam 2 pagi)" },
+            { nominal: "Rp850.000.000", note: "(Termasuk garansi service seumur hidup)" },
+            { nominal: "Tuker Tambah Gorengan", note: "(Plus cabe rawit 5 biji)" },
+            { nominal: "Rp999 Triliun", note: "(Belum termasuk PPN 11% dan ongkir darat)" },
+            { nominal: "Gratis Ongkir", note: "(Asal langsung dijemput di tempat)" },
+            { nominal: "Rp350.000", note: "(Bisa dicicil 12x tanpa bunga)" },
+            { nominal: "Rp7.800.000.000", note: "(Valuasi setara pemain cadangan Liga Champions)" },
+            { nominal: "Rp500 Perak", note: "(Uang koin gambar melati)" },
+            { nominal: "Rp150.000.000", note: "(Paket komplit siap pakai)" },
+            { nominal: "Tuker Sandal Jepit", note: "(Wajib yang warna ijo swallow)" }
+        ];
+
+        const dbStatus = [
+            "SAHAM BLUE CHIP SANGAT DICARI", "BARANG ANTIK EDISI TERBATAS", "READY STOCK BISA NEGO",
+            "PRODUK CUCI GUDANG AKHIR TAHUN", "ASET OVERPRICED TAPI LAKU", "BARANG DISPLAY TOKO",
+            "PRE-ORDER INDENT 3 BULAN", "EDISI KOLEKTOR SUSAH DICARI"
+        ];
+
+        const dbAset = [
+            "Punya senyum manis yang bikin kasir minimarket salah hitung kembalian",
+            "Keahlian pura-pura sibuk ngetik saat atasan lewat di depan meja",
+            "Kemampuan menghabiskan 3 piring nasi padang dalam waktu 5 menit",
+            "Penyimpan rahasia teman yang handal (kecuali kalau disogok boba)",
+            "Stok alasan terlambat yang tidak pernah habis dan selalu variatif",
+            "Koleksi meme langka yang belum pernah beredar di grup WhatsApp keluarga",
+            "Ketahanan mental tingkat dewa saat melihat gebetan jalan sama yang lain",
+            "Keahlian mendeteksi promo gratis ongkir tanpa minimum belanja",
+            "Bisa tidur 12 jam nonstop tanpa mengubah posisi bantal",
+            "Kemampuan menyanyikan nada tinggi walaupun falesnya bikin anjing menggonggong",
+            "Insting tajam untuk bangun tepat 1 menit sebelum dosen absen",
+            "Bakat alami menjadi pendengar curhat profesional tanpa ngasih solusi"
+        ];
+
+        // --- PSEUDO RANDOM NUMBER GENERATOR (PRNG) ---
+        function cyrb128(str) {
+            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+            for (let i = 0, k; i < str.length; i++) {
+                k = str.charCodeAt(i);
+                h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+            }
+            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+            h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179); h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
+            return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+        }
+
+        function sfc32(a, b, c, d) {
+            return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+                let t = (a + b) | 0;
+                a = b ^ b >>> 9; b = c + (c << 3) | 0; c = (c << 21 | c >>> 11); d = d + 1 | 0;
+                t = t + d | 0; c = c + t | 0; return (t >>> 0) / 4294967296;
+            }
+        }
+
+        function createPRNG(seedStr) {
+            const normalized = seedStr.trim().toLowerCase().replace(/\s+/g, ' ');
+            const seed = cyrb128(normalized);
+            return sfc32(seed[0], seed[1], seed[2], seed[3]);
+        }
+
+        function randInt(min, max, prng) { return Math.floor(prng() * (max - min + 1)) + min; }
+        function randItem(arr, prng) { return arr[randInt(0, arr.length - 1, prng)]; }
+
+        // --- GAME LOGIC ---
+        function switchPhase(phaseId) {
+            document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(phaseId).classList.add('active');
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') startAnalysis(); }
+
+        function resetGame() {
+            document.getElementById('playerName').value = '';
+            switchPhase('phase-input');
+            document.getElementById('playerName').focus();
+        }
+
+        function startAnalysis() {
+            const nameInput = document.getElementById('playerName').value;
+            if (!nameInput.trim()) { alert("Masukkan nama penonton untuk dihitung!"); return; }
+
+            switchPhase('phase-loading');
+            
+            const loadTexts = [
+                "Menghubungkan ke Bursa Manusia...", 
+                "Menganalisis fluktuasi indeks gengsi...", 
+                "Menghitung aset bawaan & beban sosial...", 
+                "Menerbitkan sertifikat valuasi pasar..."
+            ];
+            
+            let textEl = document.getElementById('loadingText');
+            let fillEl = document.getElementById('progressFill');
+            let pctEl = document.getElementById('loadingPct');
+            
+            let progress = 0; let textIdx = 0;
+            textEl.innerText = loadTexts[0];
+            
+            let textInterval = setInterval(() => {
+                textIdx = (textIdx + 1) % loadTexts.length;
+                textEl.innerText = loadTexts[textIdx];
+            }, 800);
+
+            let progressInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 8) + 2;
+                if (progress >= 100) progress = 100;
+                
+                fillEl.style.width = progress + "%";
+                pctEl.innerText = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(textInterval); clearInterval(progressInterval);
+                    setTimeout(() => generateResult(nameInput), 500);
+                }
+            }, 150);
+        }
+
+        function generateResult(name) {
+            const prng = createPRNG(name);
+            
+            const itemHarga = randItem(dbTipeHarga, prng);
+            const status = randItem(dbStatus, prng);
+            const aset = randItem(dbAset, prng);
+            
+            const gengsi = randInt(45, 99, prng);
+            const visual = randInt(50, 99, prng);
+            const beban = randInt(10, 99, prng);
+            
+            let desc = `Berdasarkan rekapitulasi audit pasar finansial, nama ${name} memiliki likuiditas sosial yang cukup stabil. Nilai pasarmu berpotensi melonjak drastis jika kamu mulai rajin mandi tepat waktu dan kurangi kebiasaan scroll olshop saat saldo menipis!`;
+            
+            if (beban > 80) {
+                desc = `PERINGATAN PASAR! Indeks beban keluargamu terpantau cukup tinggi. Disarankan segera mencari 'investor' (jodoh kaya) untuk menyeimbangkan neraca keuangan hidupmu!`;
+            } else if (gengsi > 90) {
+                desc = `Valuasi gengsi sangat tinggi menembus langit! Sistem merekomendasikan untuk tetap tampil percaya diri walau dompet tinggal berisi struk belanjaan lama.`;
+            }
+
+            // Render UI
+            document.getElementById('resName').innerText = `SUBJEK: ${name}`;
+            document.getElementById('resPrice').innerHTML = `${itemHarga.nominal} <span style="font-size: 1rem; color: #a39b7d; display: block; margin-top: 5px;">${itemHarga.note}</span>`;
+            document.getElementById('resStatus').innerText = `STATUS: ${status}`;
+            document.getElementById('valGengsi').innerText = gengsi + "%";
+            document.getElementById('valVisual').innerText = visual + "%";
+            document.getElementById('valBeban').innerText = beban + "%";
+            document.getElementById('resAsset').innerText = `"${aset}"`;
+            document.getElementById('resDesc').innerText = desc;
+
+            switchPhase('phase-result');
+        }
+
+        // --- GLOBAL CONTROLS & PARTICLES ---
+        function toggleStreamMode() {
+            const body = document.body; const btn = document.getElementById('btn-stream');
+            body.classList.toggle('stream-mode');
+            localStorage.setItem('tiktok_stream_mode', body.classList.contains('stream-mode'));
+            btn.classList.toggle('active', body.classList.contains('stream-mode'));
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('tiktok_stream_mode') === 'true') {
+                document.body.classList.add('stream-mode');
+                document.getElementById('btn-stream').classList.add('active');
+            }
+            initParticles(); animateParticles();
+            document.getElementById('playerName').focus();
+        });
+
+        // Golden Dollar Particles
+        const canvas = document.getElementById('particle-canvas'); const ctx = canvas.getContext('2d');
+        let particles = [];
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1; this.speedX = (Math.random() - 0.5) * 0.4;
+                this.speedY = Math.random() * 0.6 + 0.3; // Jatuh perlahan seperti hujan koin
+                this.alpha = Math.random() * 0.6 + 0.2;
+                this.color = Math.random() > 0.4 ? '#ffd166' : '#f48c06';
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        function initParticles() { for (let i = 0; i < (canvas.width * canvas.height)/10000; i++) particles.push(new Particle()); }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ring Fight: Pejabat vs Netizen - Kosmik AI</title>
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --primary: #ef233c; /* Red Boss */
+            --accent-gold: #ffb703;
+            --text-main: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main); min-height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        header {
+            position: relative; z-index: 20; display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 30px; background: rgba(0, 0, 0, 0.8); border-bottom: 2px solid var(--primary);
+        }
+
+        .btn-ctrl {
+            padding: 8px 15px; font-size: 0.85rem; font-weight: bold; color: #fff;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px; cursor: pointer; transition: 0.3s; text-decoration: none;
+        }
+        .btn-ctrl:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-ctrl.active { background: var(--primary); border-color: var(--primary); }
+
+        /* --- ARENA --- */
+        main.arena {
+            flex-grow: 1; position: relative; background: #111;
+            display: flex; flex-direction: column; justify-content: space-between;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.1)),
+                repeating-linear-gradient(45deg, #1a1a1a 0, #1a1a1a 2px, #111 0, #111 50%);
+            perspective: 1000px;
+        }
+
+        .ring-floor {
+            position: absolute; bottom: 5%; left: 5%; right: 5%; height: 45%;
+            background: radial-gradient(ellipse at center, #2a2a2a 0%, #000 100%);
+            border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 20px;
+            transform: rotateX(60deg); box-shadow: 0 0 80px rgba(239, 35, 60, 0.3);
+            z-index: 1;
+        }
+
+        /* --- HUD --- */
+        .hud {
+            position: absolute; top: 20px; left: 0; right: 0; display: flex;
+            justify-content: space-between; align-items: center; padding: 0 40px; z-index: 20;
+        }
+        .boss-hp-container {
+            width: 50%; background: #222; border: 3px solid #444; border-radius: 15px;
+            height: 40px; position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #boss-hp-fill { height: 100%; background: linear-gradient(90deg, #8a0e1b, var(--primary)); width: 100%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 900; font-size: 1.2rem; text-shadow: 1px 1px 2px #000; z-index: 2;}
+        
+        .swarm-stats {
+            background: rgba(255, 255, 255, 0.1); border: 2px solid #fff;
+            padding: 10px 20px; border-radius: 10px; font-weight: 900; font-size: 1.5rem;
+            color: #fff; text-shadow: 0 0 10px #fff;
+        }
+
+        /* --- FIGHTERS CONTAINER --- */
+        .fighters-container {
+            position: absolute; top: 25%; left: 0; right: 0; height: 70%;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            z-index: 10; padding: 0 5%;
+        }
+
+        /* Boss Setup */
+        .boss-char {
+            display: flex; flex-direction: column; align-items: center;
+            width: 30%; transition: opacity 0.5s;
+        }
+        .boss-name {
+            font-size: 2.2rem; font-weight: 900; padding: 5px 25px; border-radius: 10px;
+            margin-bottom: 5px; text-transform: uppercase; color: var(--primary);
+            background: rgba(0,0,0,0.8); border: 2px solid var(--primary); z-index: 15;
+            box-shadow: 0 0 15px rgba(239, 35, 60, 0.5);
+        }
+        
+        /* Swarm Setup */
+        .swarm-container {
+            width: 65%; height: 100%; display: flex; flex-wrap: wrap-reverse;
+            align-content: flex-end; justify-content: flex-end; gap: 15px;
+            padding-bottom: 40px;
+        }
+
+        .netizen-char {
+            display: flex; flex-direction: column; align-items: center;
+            width: 120px; transition: 0.3s;
+        }
+        .netizen-name {
+            font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.8);
+            padding: 3px 8px; border-radius: 5px; text-overflow: ellipsis; 
+            overflow: hidden; white-space: nowrap; max-width: 95%; border: 1px solid;
+            margin-bottom: 2px;
+        }
+        .mini-hp { width: 80%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 5px;}
+        .mini-hp-fill { height: 100%; width: 100%; transition: 0.2s; }
+
+        /* --- STICKMAN ANIMATION WRAPPERS --- */
+        .fighter-body { transform-origin: bottom center; }
+        .idle-bob { animation: bobbing 0.8s infinite alternate ease-in-out; }
+        .idle-bob-fast { animation: bobbing 0.6s infinite alternate ease-in-out; }
+
+        @keyframes bobbing { 
+            0% { transform: translateY(0) scaleY(1); } 
+            100% { transform: translateY(-8px) scaleY(0.95); } 
+        }
+
+        /* --- STICKMAN SVG SIZING --- */
+        .stickman-boss { width: 280px; height: 350px; filter: drop-shadow(0 0 25px rgba(239, 35, 60, 0.6)); }
+        .stickman-netizen { width: 110px; height: 140px; transform: scaleX(-1); }
+
+        /* --- UI OVERLAYS --- */
+        .combat-log {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.85); padding: 15px 40px; border-radius: 20px;
+            font-size: 1.5rem; color: #fff; z-index: 20; border: 2px solid #444; font-weight: bold; text-align: center;
+        }
+
+        .ultimate-overlay {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-size: 5.5rem; font-weight: 900; color: var(--accent-gold); text-transform: uppercase;
+            text-shadow: 0 0 40px rgba(255, 183, 3, 0.9), 4px 4px 0 #000; z-index: 50;
+            text-align: center; opacity: 0; pointer-events: none; width: 100%;
+        }
+        .ult-active { animation: ultPop 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes ultPop { 
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; } 
+            15% { transform: translate(-50%, -50%) scale(1.1) rotate(0deg); opacity: 1; }
+            85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } 
+        }
+
+        .damage-text {
+            position: absolute; font-size: 3.5rem; font-weight: 900; color: #fff;
+            text-shadow: 0 0 15px #000, 3px 3px 0px #000; z-index: 30; pointer-events: none;
+            animation: floatUp 1s forwards; opacity: 1;
+        }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-130px) scale(1.5); opacity: 0; } }
+
+        /* --- CONTROL PANEL --- */
+        .control-panel {
+            position: relative; z-index: 30; background: rgba(0,0,0,0.95); padding: 25px;
+            border-top: 3px solid #666; display: flex; justify-content: center; gap: 15px;
+        }
+        input[type="text"] {
+            padding: 15px 25px; font-size: 1.5rem; border-radius: 10px; border: 2px solid #555;
+            background: #111; color: #fff; width: 450px; text-transform: uppercase; outline: none; transition: 0.3s;
+        }
+        input[type="text"]:focus { border-color: #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+        .btn-spawn {
+            padding: 15px 35px; font-size: 1.5rem; font-weight: 900; color: #000;
+            background: #fff; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); transition: 0.2s;
+        }
+        .btn-spawn:hover { background: #ccc; transform: scale(1.05); }
+
+        /* --- COMBAT ANIMATIONS --- */
+        .anim-attack-right { animation: dashRight 0.5s ease-out; }
+        @keyframes dashRight { 
+            0% { transform: translate(0, 0); } 
+            30% { transform: translate(-20px, 10px) rotate(-5deg); } 
+            50% { transform: translate(120px, -40px) scale(1.15) rotate(10deg); } 
+            100% { transform: translate(0, 0); } 
+        }
+
+        .anim-attack-left { animation: dashLeft 0.4s ease-out; }
+        @keyframes dashLeft { 
+            0% { transform: translate(0, 0); } 
+            30% { transform: translate(10px, 5px) rotate(5deg); } 
+            50% { transform: translate(-80px, -30px) scale(1.15) rotate(-10deg); } 
+            100% { transform: translate(0, 0); } 
+        }
+
+        .anim-hit-left { animation: hitLeft 0.4s; filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); }
+        .anim-hit-right { animation: hitRight 0.4s; filter: brightness(2) sepia(1) hue-rotate(150deg) saturate(5); }
+        @keyframes hitLeft { 0%, 100% { transform: translate(0,0) rotate(0); } 40% { transform: translate(-30px, -10px) rotate(-15deg); } }
+        @keyframes hitRight { 0%, 100% { transform: translate(0,0) rotate(0); } 40% { transform: translate(30px, -10px) rotate(15deg); } }
+        
+        .anim-die { animation: die 0.6s forwards; }
+        @keyframes die { 0% { transform: scale(1) rotate(0); opacity: 1; } 100% { transform: translate(50px, 100px) scale(0) rotate(180deg); opacity: 0; } }
+
+        /* --- STREAM MODE --- */
+        body.stream-mode .boss-name { font-size: 3.5rem; }
+        body.stream-mode .stickman-boss { width: 400px; height: 480px; }
+        body.stream-mode .stickman-netizen { width: 140px; height: 180px; }
+        body.stream-mode .hp-text { font-size: 2.2rem; }
+        body.stream-mode .swarm-stats { font-size: 2.5rem; }
+        body.stream-mode .combat-log { font-size: 2.5rem; bottom: 180px; }
+        body.stream-mode .ultimate-overlay { font-size: 8rem; }
+        body.stream-mode .control-panel { padding: 35px; }
+        body.stream-mode input[type="text"] { font-size: 2.5rem; width: 650px; }
+        body.stream-mode .btn-spawn { font-size: 2.5rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="btn-ctrl">← KEMBALI</a>
+        <div style="color: var(--accent-gold); font-weight: bold; font-size: 1.2rem; letter-spacing: 2px;">🏆 ARENA KEROYOKAN</div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-ctrl" id="btn-stream" onclick="toggleStreamMode()">🎥 STREAM MODE</button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()">🖥 FULLSCREEN</button>
+        </div>
+    </header>
+
+    <main class="arena">
+        <div class="ring-floor"></div>
+        
+        <!-- HUD -->
+        <div class="hud">
+            <div class="boss-hp-container">
+                <div id="boss-hp-fill"></div>
+                <div class="hp-text" id="boss-hp-text">0 / 0</div>
+            </div>
+            <div class="swarm-stats">
+                PASUKAN: <span id="netizen-count">0</span>
+            </div>
+        </div>
+
+        <div class="ultimate-overlay" id="ult-text">JURUS ULTIMATE!</div>
+        <div class="combat-log" id="combat-log">Ketik nama di bawah untuk mengirim pasukan ke Ring!</div>
+
+        <!-- FIGHTERS -->
+        <div class="fighters-container">
+            <!-- BOSS -->
+            <div class="boss-char" id="boss">
+                <div class="boss-name" id="boss-name">...</div>
+                <div class="fighter-body idle-bob" id="boss-body">
+                    <!-- SVG Stickman Boss akan di-inject via JS -->
+                </div>
+            </div>
+            
+            <!-- NETIZENS SWARM -->
+            <div class="swarm-container" id="swarm">
+                <!-- Netizen elements will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- CONTROL PANEL -->
+    <div class="control-panel">
+        <input type="text" id="inputName" placeholder="Ketik Nama Netizen (Bisa Spam!)" onkeypress="handleEnter(event)" autocomplete="off">
+        <button class="btn-spawn" onclick="spawnNetizen()">KIRIM PASUKAN 🥊</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // GENERATOR STICKMAN SVG MURNI
+        // ==========================================
+        function getStickmanSVG(color, isBoss) {
+            const glow = isBoss ? `filter="drop-shadow(0 0 10px ${color})"` : '';
+            return `
+            <svg class="${isBoss ? 'stickman-boss' : 'stickman-netizen'}" viewBox="0 0 200 250" ${glow}>
+                <g stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                    <!-- Back Leg -->
+                    <path d="M90,155 L105,210"/>
+                    <ellipse cx="110" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
+                    
+                    <!-- Front Leg -->
+                    <path d="M70,155 L50,210"/>
+                    <ellipse cx="45" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
+                    
+                    <!-- Torso -->
+                    <path d="M80,60 L75,120"/>
+                    
+                    <!-- Shorts (Celana Tinju) -->
+                    <path d="M55,120 L95,120 L105,160 L80,150 L55,160 Z" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <path d="M80,120 L80,150" stroke="#fff" stroke-width="3"/> <!-- Garis tengah celana -->
+                    <path d="M60,125 L55,155" stroke="#fff" stroke-width="2"/> <!-- Garis strip samping -->
+                    
+                    <!-- Head -->
+                    <circle cx="90" cy="35" r="28" fill="${isBoss ? 'rgba(239,35,60,0.1)' : 'rgba(255,255,255,0.05)'}"/>
+                    
+                    <!-- Angry Face -->
+                    <path d="M95,25 L112,33" stroke="#fff" stroke-width="4"/> <!-- Alis Kiri -->
+                    <circle cx="106" cy="38" r="4" fill="#fff" stroke="none"/> <!-- Mata -->
+                    <path d="M95,52 Q105,45 112,52" stroke="#fff" stroke-width="3"/> <!-- Mulut Merengut -->
+                    
+                    <!-- Back Arm & Glove -->
+                    <path d="M80,75 L125,65"/>
+                    <rect x="115" y="52" width="12" height="22" fill="#fff" stroke="none" transform="rotate(-15 125 60)"/>
+                    <circle cx="140" cy="60" r="18" fill="${color}" stroke="#fff" stroke-width="3"/>
+                    
+                    <!-- Front Arm & Glove -->
+                    <path d="M75,90 L115,100"/>
+                    <rect x="105" y="85" width="12" height="24" fill="#fff" stroke="none" transform="rotate(10 115 100)"/>
+                    <circle cx="135" cy="100" r="22" fill="${color}" stroke="#fff" stroke-width="3"/>
+                </g>
+            </svg>`;
+        }
+
+
+        // ==========================================
+        // AUDIO SYNTHESIZER
+        // ==========================================
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playPunch() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(120 + Math.random()*50, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playUlt() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 1.2);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 1.2);
+        }
+
+        function playKO() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 1);
+        }
+
+        // ==========================================
+        // DATABASE PEJABAT (BOSS)
+        // ==========================================
+        const bosses = [
+            { name: "Prabowi", hp: 10000, atk: 250, ultName: "TENDANGAN GEMOY MEGAWATT", ultChance: 0.20, ultMult: 3 },
+            { name: "Gibrin", hp: 15000, atk: 350, ultName: "ASAM SULFAT BLASTER", ultChance: 0.25, ultMult: 2.5 },
+            { name: "Jokowa", hp: 25000, atk: 450, ultName: "BANSOS GAIB STRIKE", ultChance: 0.15, ultMult: 3 },
+            { name: "Mak Banteng", hp: 40000, atk: 600, ultName: "SERUDUKAN PETUGAS PARTAI", ultChance: 0.20, ultMult: 3.5 },
+            { name: "Lord Luhut", hp: 60000, atk: 800, ultName: "KENDALI SEGALA URUSAN", ultChance: 0.25, ultMult: 4 },
+            { name: "Mulyoni", hp: 99999, atk: 1200, ultName: "JET PRIBADI NEPOTISME", ultChance: 0.20, ultMult: 5 }
+        ];
+
+        let currentBossIdx = 0;
+        let b = null; 
+        let netizens = []; 
+        let fightInterval = null;
+
+        // SEED GEN
+        function cyrb128(str) {
+            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+            for(let i=0, k; i<str.length; i++) {
+                k = str.charCodeAt(i);
+                h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+            }
+            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+            h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179); h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
+            return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+        }
+        function sfc32(a, b, c, d) {
+            return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; let t = (a + b) | 0;
+                a = b ^ b >>> 9; b = c + (c << 3) | 0; c = (c << 21 | c >>> 11); d = d + 1 | 0;
+                t = t + d | 0; c = c + t | 0; return (t >>> 0) / 4294967296;
+            }
+        }
+
+        // ==========================================
+        // CORE LOGIC
+        // ==========================================
+        function initGame() {
+            loadBoss(0);
+            fightInterval = setInterval(combatStep, 2000); 
+        }
+
+        function loadBoss(index) {
+            if(index >= bosses.length) {
+                document.getElementById('combat-log').innerText = "🎉 REVOLUSI BERHASIL! SEMUA PEJABAT TUMBANG! 🎉";
+                document.getElementById('boss-name').innerText = "TAMAT";
+                b = null; return;
+            }
+            const data = bosses[index];
+            b = { ...data, currentHp: data.hp };
+            
+            document.getElementById('boss-name').innerText = b.name;
+            const bossBody = document.getElementById('boss-body');
+            bossBody.innerHTML = getStickmanSVG('#ef233c', true);
+            
+            // Hapus animasi mati dan kembalikan ke animasi idle
+            bossBody.classList.remove('anim-die');
+            bossBody.classList.add('idle-bob');
+
+            updateBossHP();
+            document.getElementById('boss').style.opacity = "1";
+            document.getElementById('combat-log').innerText = `⚠️ ${b.name} masuk Ring dan menantang seluruh netizen!`;
+        }
+
+        function updateBossHP() {
+            if(!b) return;
+            const pct = Math.max(0, (b.currentHp / b.hp) * 100);
+            document.getElementById('boss-hp-fill').style.width = pct + "%";
+            document.getElementById('boss-hp-text').innerText = `${Math.ceil(b.currentHp)} / ${b.hp}`;
+        }
+
+        function handleEnter(e) { if(e.key === 'Enter') spawnNetizen(); }
+
+        function spawnNetizen() {
+            initAudio();
+            const inputEl = document.getElementById('inputName');
+            const name = inputEl.value.trim().toUpperCase();
+            if(!name || !b) return;
+
+            const seed = cyrb128(name.toLowerCase());
+            const prng = sfc32(seed[0], seed[1], seed[2], seed[3]);
+            
+            const hp = Math.floor(prng() * 3000) + 2000; 
+            const atk = Math.floor(prng() * 60) + 30;  
+            const id = 'netizen_' + Date.now() + Math.floor(Math.random()*1000);
+            
+            const hue = Math.floor(prng() * 360);
+            const color = `hsl(${hue}, 80%, 60%)`;
+            
+            netizens.push({ id, name, hp, currentHp: hp, atk, color });
+            
+            const el = document.createElement('div');
+            el.className = 'netizen-char';
+            el.id = id;
+            el.innerHTML = `
+                <div class="netizen-name" style="color: ${color}; border-color: ${color}; box-shadow: 0 0 5px ${color};">${name}</div>
+                <div class="mini-hp"><div class="mini-hp-fill" style="background: ${color}; width:100%"></div></div>
+                <div class="fighter-body idle-bob-fast">${getStickmanSVG(color, false)}</div>
+            `;
+            document.getElementById('swarm').appendChild(el);
+            
+            inputEl.value = "";
+            document.getElementById('netizen-count').innerText = netizens.length;
+            document.getElementById('combat-log').innerText = `🔥 ${name} masuk ring dengan HP ${hp}!`;
+        }
+
+        function showDamage(rect, amount, isCrit, isBossHit = false) {
+            const dmgText = document.createElement('div');
+            dmgText.className = 'damage-text';
+            dmgText.innerText = `-${amount}`;
+            
+            if(isCrit) dmgText.style.color = 'var(--accent-gold)';
+            else if(isBossHit) dmgText.style.color = '#ef233c'; 
+            else dmgText.style.color = '#fff';
+            
+            const offsetX = (Math.random() - 0.5) * 80;
+            dmgText.style.left = (rect.left + rect.width/2 + offsetX) + 'px';
+            dmgText.style.top = (rect.top + 50) + 'px';
+            
+            document.body.appendChild(dmgText);
+            setTimeout(() => dmgText.remove(), 1000);
+        }
+
+        function combatStep() {
+            if(!b || b.currentHp <= 0 || netizens.length === 0) return;
+
+            // 1. SEMUA NETIZEN MENYERANG BOSS (Bergerak serentak)
+            let totalDmg = 0;
+            netizens.forEach(n => {
+                const dmg = Math.floor(n.atk * (0.8 + Math.random()*0.4));
+                totalDmg += dmg;
+                const el = document.getElementById(n.id);
+                if(el) {
+                    const bodyEl = el.querySelector('.fighter-body');
+                    bodyEl.classList.remove('idle-bob-fast'); 
+                    bodyEl.classList.add('anim-attack-left');
+                    setTimeout(() => {
+                        bodyEl.classList.remove('anim-attack-left');
+                        bodyEl.classList.add('idle-bob-fast');
+                    }, 400);
+                }
+            });
+
+            // Reaksi Boss Terkena Hit
+            setTimeout(() => {
+                b.currentHp -= totalDmg;
+                playPunch();
+                const bossBody = document.getElementById('boss-body');
+                
+                bossBody.classList.remove('idle-bob');
+                bossBody.classList.add('anim-hit-left'); 
+                
+                setTimeout(() => {
+                    bossBody.classList.remove('anim-hit-left');
+                    bossBody.classList.add('idle-bob');
+                }, 400);
+                
+                showDamage(document.getElementById('boss').getBoundingClientRect(), totalDmg, false, true);
+                updateBossHP();
+                
+                document.getElementById('combat-log').innerText = `💥 Pasukan merangsek maju! (-${totalDmg} HP Boss)`;
+                
+                if(b.currentHp <= 0) {
+                    handleBossDeath();
+                    return;
+                }
+
+                // 2. BOSS MEMBALAS 
+                setTimeout(() => {
+                    if(b.currentHp <= 0 || netizens.length === 0) return;
+
+                    bossBody.classList.remove('idle-bob');
+                    bossBody.classList.add('anim-attack-right'); 
+                    setTimeout(() => {
+                        bossBody.classList.remove('anim-attack-right');
+                        bossBody.classList.add('idle-bob');
+                    }, 500);
+
+                    const isUlt = Math.random() < b.ultChance;
+                    let deadCount = 0;
+
+                    if(isUlt) {
+                        playUlt();
+                        const dmg = Math.floor(b.atk * b.ultMult);
+                        const ultText = document.getElementById('ult-text');
+                        ultText.innerText = b.ultName;
+                        ultText.classList.remove('ult-active');
+                        void ultText.offsetWidth; 
+                        ultText.classList.add('ult-active');
+                        document.getElementById('combat-log').innerText = `⚠️ ${b.name} MENGELUARKAN ${b.ultName}!!`;
+                        
+                        netizens.forEach(n => { n.currentHp -= dmg; });
+                    } else {
+                        playPunch();
+                        const targets = Math.min(netizens.length, Math.floor(Math.random() * 3) + 1);
+                        document.getElementById('combat-log').innerText = `${b.name} membalas pukulan brutal ke ${targets} netizen!`;
+                        for(let i=0; i<targets; i++) {
+                            const target = netizens[Math.floor(Math.random() * netizens.length)];
+                            target.currentHp -= Math.floor(b.atk * (0.8 + Math.random()*0.4));
+                        }
+                    }
+
+                    // Update UI & Filter Dead Netizens
+                    netizens = netizens.filter(n => {
+                        const el = document.getElementById(n.id);
+                        if(!el) return false;
+
+                        if(n.currentHp <= 0) {
+                            el.classList.add('anim-die');
+                            setTimeout(() => el.remove(), 600);
+                            deadCount++;
+                            return false;
+                        } else {
+                            el.querySelector('.mini-hp-fill').style.width = (n.currentHp / n.hp * 100) + '%';
+                            
+                            const nBody = el.querySelector('.fighter-body');
+                            nBody.classList.remove('idle-bob-fast');
+                            nBody.classList.add('anim-hit-right');
+                            setTimeout(() => {
+                                nBody.classList.remove('anim-hit-right');
+                                nBody.classList.add('idle-bob-fast');
+                            }, 400);
+
+                            if(isUlt) showDamage(el.getBoundingClientRect(), Math.floor(b.atk * b.ultMult), true);
+                            return true;
+                        }
+                    });
+
+                    document.getElementById('netizen-count').innerText = netizens.length;
+                    if(deadCount > 0) {
+                        setTimeout(() => {
+                            document.getElementById('combat-log').innerText = `💀 ${deadCount} netizen gugur... Butuh bantuan!`;
+                            if(netizens.length === 0) playKO();
+                        }, 1200);
+                    }
+
+                }, 1000); 
+
+            }, 200); 
+        }
+
+        function handleBossDeath() {
+            b.currentHp = 0; updateBossHP();
+            playKO();
+            document.getElementById('boss-body').classList.remove('idle-bob');
+            document.getElementById('boss-body').classList.add('anim-die');
+            document.getElementById('combat-log').innerText = `👑 ${b.name} TUMBANG DIKEROYOK PASUKAN!`;
+            
+            setTimeout(() => {
+                currentBossIdx++;
+                loadBoss(currentBossIdx);
+            }, 3500);
+        }
+
+        // --- GLOBAL CONTROLS ---
+        function toggleStreamMode() {
+            const body = document.body; const btn = document.getElementById('btn-stream');
+            body.classList.toggle('stream-mode');
+            localStorage.setItem('tiktok_stream_mode', body.classList.contains('stream-mode'));
+            btn.classList.toggle('active', body.classList.contains('stream-mode'));
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('tiktok_stream_mode') === 'true') {
+                document.body.classList.add('stream-mode');
+                document.getElementById('btn-stream').classList.add('active');
+            }
+            initGame();
+            document.getElementById('inputName').focus();
+        });
+    </script>
+</body>
+</html>

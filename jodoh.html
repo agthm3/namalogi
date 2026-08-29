@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Kecocokan Jodoh - Kosmik AI</title>
+    <style>
+        :root {
+            --bg-color: #08090d;
+            --card-bg: rgba(20, 27, 38, 0.75);
+            --primary: #ff007f;
+            --secondary: #ff4d4d;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 0, 127, 0.25);
+            --glow-primary: rgba(255, 0, 127, 0.4);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main); min-height: 100vh;
+            display: flex; flex-direction: column; overflow-x: hidden;
+            background-image: radial-gradient(circle at 80% 20%, rgba(255, 0, 127, 0.08), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+        header {
+            position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; background: rgba(8, 9, 13, 0.6); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-ctrl {
+            padding: 10px 18px; font-size: 0.85rem; font-weight: 700; color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px; cursor: pointer; transition: all 0.3s; display: inline-flex; gap: 8px; text-decoration: none;
+        }
+        .btn-ctrl:hover { background: rgba(255, 0, 127, 0.15); border-color: var(--primary); color: var(--primary); }
+        .btn-ctrl.active { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--glow-primary); border-color: var(--primary); }
+
+        main.container {
+            position: relative; z-index: 10; max-width: 900px; margin: 40px auto; padding: 20px;
+            text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* --- PHASE PANELS --- */
+        .phase-panel { display: none; animation: fadeIn 0.5s ease; }
+        .phase-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .game-icon { font-size: 4rem; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--primary)); animation: heartbeat 1.5s infinite; }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        
+        .main-title { font-size: 3rem; font-weight: 900; text-transform: uppercase; color: var(--primary); text-shadow: 0 0 20px var(--glow-primary); margin-bottom: 10px; }
+        .subtitle { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+
+        /* --- INPUT --- */
+        .input-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 30px 0; flex-wrap: wrap; }
+        input[type="text"] {
+            width: 100%; max-width: 300px; padding: 18px 20px; font-size: 1.2rem; text-align: center;
+            background: rgba(0, 0, 0, 0.5); border: 2px solid var(--secondary); color: #fff;
+            border-radius: 12px; outline: none; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 20px var(--glow-primary); }
+        .plus-icon { font-size: 2rem; color: var(--primary); font-weight: bold; }
+
+        .btn-primary {
+            padding: 16px 35px; font-size: 1.2rem; font-weight: bold; background: var(--primary); color: #fff;
+            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 20px var(--glow-primary); transition: all 0.3s; margin-top: 20px;
+        }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 0 30px var(--primary); }
+
+        /* --- LOADING --- */
+        .scanner-ring {
+            width: 120px; height: 120px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 30px; position: relative;
+        }
+        .scanner-ring::after {
+            content: '❤️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 2rem; animation: heartbeat 1s infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loading-text { font-size: 1.5rem; color: var(--primary); font-weight: bold; min-height: 40px; letter-spacing: 2px; }
+        .progress-bar { width: 100%; max-width: 400px; height: 10px; background: #222; border-radius: 5px; margin: 20px auto; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.2s; box-shadow: 0 0 10px var(--primary); }
+        .loading-pct { font-size: 2rem; font-weight: bold; margin-top: 10px; }
+
+        /* --- RESULT --- */
+        .result-card {
+            background: var(--card-bg); border: 2px solid var(--primary); border-radius: 20px;
+            padding: 40px 30px; backdrop-filter: blur(15px); box-shadow: 0 0 40px rgba(255, 0, 127, 0.2);
+            margin-bottom: 30px;
+        }
+        .r-label { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .r-names { font-size: 2.2rem; font-weight: bold; color: #fff; margin-bottom: 15px; text-transform: uppercase; }
+        
+        .score-container { position: relative; width: 180px; height: 180px; margin: 20px auto 30px; }
+        .r-score {
+            font-size: 4rem; font-weight: 900; color: #fff; text-shadow: 0 0 20px var(--glow-primary);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); line-height: 1;
+        }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-box { background: rgba(0,0,0,0.4); padding: 20px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .s-val { font-size: 2.2rem; font-weight: bold; color: var(--primary); }
+        .s-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; }
+
+        .list-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; text-align: left; }
+        .list-box { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 12px; border-top: 3px solid transparent; }
+        .box-pro { border-color: #10b981; }
+        .box-con { border-color: #ff4d4d; }
+        .list-box h4 { font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .box-pro h4 { color: #10b981; }
+        .box-con h4 { color: #ff4d4d; }
+        .list-box ul { padding-left: 20px; color: var(--text-main); }
+        .list-box li { margin-bottom: 10px; font-size: 0.95rem; line-height: 1.4; }
+
+        .prediksi-box { background: rgba(255, 183, 3, 0.1); border: 1px solid #ffb703; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+        .prediksi-val { font-size: 1.8rem; color: #ffb703; font-weight: bold; margin-top: 5px;}
+
+        .action-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+
+        /* --- STREAM MODE --- */
+        body.stream-mode main.container { max-width: 1400px; transform: scale(1.05); margin-top: 40px; }
+        body.stream-mode .main-title { font-size: 4rem; }
+        body.stream-mode input[type="text"] { font-size: 1.8rem; max-width: 400px; padding: 20px; }
+        body.stream-mode .r-names { font-size: 3rem; }
+        body.stream-mode .list-box li { font-size: 1.2rem; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .list-container { grid-template-columns: 1fr; }
+            .input-group { flex-direction: column; }
+            input[type="text"] { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <header>
+        <div>
+            <a href="index.html" class="btn-ctrl">← KEMBALI</a>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-ctrl" id="btn-stream" onclick="toggleStreamMode()">🎥 STREAM MODE</button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()">🖥 FULLSCREEN</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- PHASE 1: INPUT -->
+        <div id="phase-input" class="phase-panel active">
+            <div class="game-icon">❤️</div>
+            <h1 class="main-title">Cek Kecocokan Jodoh</h1>
+            <p class="subtitle">Masukkan dua nama dan biarkan semesta mengungkap masa depan kalian.</p>
+            
+            <div class="input-group">
+                <input type="text" id="name1" placeholder="Nama Kamu" autocomplete="off">
+                <div class="plus-icon">➕</div>
+                <input type="text" id="name2" placeholder="Nama Dia" autocomplete="off" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-primary" onclick="startAnalysis()">❤️ Analisis Chemistry</button>
+        </div>
+
+        <!-- PHASE 2: LOADING -->
+        <div id="phase-loading" class="phase-panel">
+            <div class="scanner-ring"></div>
+            <div class="loading-text" id="loadingText">Menganalisis chemistry...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="loading-pct" id="loadingPct">0%</div>
+        </div>
+
+        <!-- PHASE 3: RESULT -->
+        <div id="phase-result" class="phase-panel">
+            <div class="result-card">
+                <div class="r-label">HASIL ANALISIS KECOCOKAN KOSMIK</div>
+                <div class="r-names" id="resNames">NAMA 1 ❤️ NAMA 2</div>
+                
+                <div class="score-container">
+                    <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3" />
+                        <path id="scoreCircle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3" stroke-dasharray="0, 100" style="transition: stroke-dasharray 1.5s ease-out;" />
+                    </svg>
+                    <div class="r-score"><span id="resScore">0</span>%</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="s-val" id="resRomance">0%</div>
+                        <div class="s-title">🔥 Keromantisan</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-val" id="resFight">0%</div>
+                        <div class="s-title">⚔️ Potensi Ribut</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="s-val" id="resMoney">0%</div>
+                        <div class="s-title">💰 Kecocokan Finansial</div>
+                    </div>
+                </div>
+
+                <div class="list-container">
+                    <div class="list-box box-pro">
+                        <h4>✅ HAL YANG BIKIN COCOK</h4>
+                        <ul id="resPros"></ul>
+                    </div>
+                    <div class="list-box box-con">
+                        <h4>💀 POTENSI MASALAH</h4>
+                        <ul id="resCons"></ul>
+                    </div>
+                </div>
+
+                <div class="prediksi-box">
+                    <div class="r-label">💍 PREDIKSI MENIKAH</div>
+                    <div class="prediksi-val" id="resMarriage">Tahun 20XX</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="resetGame()">🔄 Coba Pasangan Lain</button>
+                <a href="index.html" class="btn-ctrl" style="padding: 16px 30px; font-size: 1.1rem; border-color: rgba(255,255,255,0.2);">🏠 Menu Utama</a>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666;">Sistem hiburan semata • Jangan sampai berantem beneran 😂</div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATABASES ---
+        const dbJodohPositif = [
+            "Saling melengkapi kekurangan satu sama lain", "Memiliki selera humor yang sangat sefrekuensi", 
+            "Bisa ngobrol berjam-jam tanpa bosan", "Sama-sama suka kulineran/makan enak", 
+            "Satu tukang ngomong, satunya pendengar yang baik", "Cocok diajak susah maupun senang", 
+            "Saling dukung karier dan ambisi", "Sama-sama anak rumahan yang mageran", 
+            "Punya selera musik yang mirip", "Bisa gila bareng tanpa jaim", 
+            "Satu penyabar, satunya gampang panik (jadi balance)", "Aura positif selalu muncul kalau lagi berdua", 
+            "Saling percaya dan tidak gampang cemburu", "Cocok kalau bikin bisnis atau ngonten bareng", 
+            "Sama-sama bucin tingkat dewa", "Punya visi masa depan dan target yang sama",
+            "Satu pinter ngatur uang, satunya pinter nyari uang", "Sama-sama penyayang binatang",
+            "Sering telepati (mikirin hal yang sama di waktu bersamaan)", "Gaya marahnya lucu, jadi susah lama-lama berantem"
+        ];
+
+        const dbJodohNegatif = [
+            "Sama-sama gengsi tingkat tinggi untuk minta maaf", "Sering berdebat soal mau makan di mana", 
+            "Satu on-time, satunya langganan ngaret", "Sering rebutan remote TV atau charger", 
+            "Kalau ngambek dua-duanya jago silent treatment", "Sama-sama keras kepala dan susah ngalah", 
+            "Sering beda pendapat soal film yang mau ditonton", "Berpotensi sering salah paham di chat (kurang peka)", 
+            "Satu boros banget, satunya super pelit", "Sering lupa bales chat karena keasyikan main", 
+            "Cemburuan berlebihan untuk hal sepele", "Sering adu argumen perkara bubur diaduk/tidak", 
+            "Sama-sama mager ngambil minum kalau lagi rebahan", "Satu overthinking, satunya kelewat cuek",
+            "Kalau berantem suka bawa-bawa masa lalu", "Bisa ribut gara-gara kalah main game bareng",
+            "Sering telat janjian karena dandannya lama", "Debat panjang siapa yang harus bayar makan",
+            "Gengsi buat bilang kangen duluan", "Kadang saling roasting tapi endingnya ada yang baper"
+        ];
+
+        // --- HASHING & PRNG ---
+        function cyrb128(str) {
+            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+            for (let i = 0, k; i < str.length; i++) {
+                k = str.charCodeAt(i);
+                h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+            }
+            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+            h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179); h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
+            return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+        }
+
+        function sfc32(a, b, c, d) {
+            return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+                let t = (a + b) | 0;
+                a = b ^ b >>> 9; b = c + (c << 3) | 0; c = (c << 21 | c >>> 11); d = d + 1 | 0;
+                t = t + d | 0; c = c + t | 0; return (t >>> 0) / 4294967296;
+            }
+        }
+
+        function createPRNG(seedStr) {
+            const seed = cyrb128(seedStr);
+            return sfc32(seed[0], seed[1], seed[2], seed[3]);
+        }
+
+        function randInt(min, max, prng) { return Math.floor(prng() * (max - min + 1)) + min; }
+        
+        function getUniqueItems(arr, count, prng) {
+            let temp = [...arr]; let result = [];
+            for(let i=0; i<count; i++) {
+                if(temp.length === 0) break;
+                let idx = randInt(0, temp.length - 1, prng);
+                result.push(temp[idx]);
+                temp.splice(idx, 1);
+            }
+            return result;
+        }
+
+        // --- GAME LOGIC ---
+        function switchPhase(phaseId) {
+            document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(phaseId).classList.add('active');
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') startAnalysis(); }
+
+        function resetGame() {
+            document.getElementById('name1').value = '';
+            document.getElementById('name2').value = '';
+            switchPhase('phase-input');
+            document.getElementById('name1').focus();
+        }
+
+        function startAnalysis() {
+            const n1 = document.getElementById('name1').value.trim();
+            const n2 = document.getElementById('name2').value.trim();
+            
+            if (!n1 || !n2) {
+                alert("Masukkan kedua nama terlebih dahulu!");
+                return;
+            }
+
+            switchPhase('phase-loading');
+            
+            const loadTexts = [
+                "Menganalisis chemistry...", "Membaca energi kedua nama...", 
+                "Menghubungkan pola kepribadian...", "Memeriksa restu semesta...", 
+                "Menentukan masa depan hubungan..."
+            ];
+            
+            let textEl = document.getElementById('loadingText');
+            let fillEl = document.getElementById('progressFill');
+            let pctEl = document.getElementById('loadingPct');
+            
+            let progress = 0; let textIdx = 0;
+            textEl.innerText = loadTexts[0];
+            
+            let textInterval = setInterval(() => {
+                textIdx = (textIdx + 1) % loadTexts.length;
+                textEl.innerText = loadTexts[textIdx];
+            }, 800);
+
+            let progressInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 8) + 2;
+                if (progress >= 100) progress = 100;
+                
+                fillEl.style.width = progress + "%";
+                pctEl.innerText = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(textInterval); clearInterval(progressInterval);
+                    setTimeout(() => generateResult(n1, n2), 500);
+                }
+            }, 150);
+        }
+
+        function generateResult(name1, name2) {
+            // Sorting names alphabetically ensures A+B gives same seed as B+A
+            const sortedNames = [name1.toLowerCase(), name2.toLowerCase()].sort();
+            const seedStr = sortedNames[0] + "|" + sortedNames[1];
+            const prng = createPRNG(seedStr);
+            
+            const score = randInt(15, 99, prng);
+            const romance = randInt(30, 99, prng);
+            const fight = randInt(15, 95, prng);
+            const money = randInt(10, 99, prng);
+            
+            // Current year is 2026 based on context. 
+            const marriageYear = 2026 + randInt(1, 10, prng);
+            
+            const pros = getUniqueItems(dbJodohPositif, 3, prng);
+            const cons = getUniqueItems(dbJodohNegatif, 3, prng);
+
+            // Render UI
+            document.getElementById('resNames').innerText = `${name1} ❤️ ${name2}`;
+            
+            // Animate Score & Circle
+            document.getElementById('resScore').innerText = score;
+            setTimeout(() => {
+                document.getElementById('scoreCircle').style.strokeDasharray = `${score}, 100`;
+            }, 100);
+
+            document.getElementById('resRomance').innerText = romance + "%";
+            document.getElementById('resFight').innerText = fight + "%";
+            document.getElementById('resMoney').innerText = money + "%";
+            
+            document.getElementById('resPros').innerHTML = pros.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('resCons').innerHTML = cons.map(c => `<li>${c}</li>`).join('');
+            
+            document.getElementById('resMarriage').innerText = `Tahun ${marriageYear}`;
+
+            switchPhase('phase-result');
+        }
+
+        // --- GLOBAL CONTROLS & PARTICLES ---
+        function toggleStreamMode() {
+            const body = document.body; const btn = document.getElementById('btn-stream');
+            body.classList.toggle('stream-mode');
+            localStorage.setItem('tiktok_stream_mode', body.classList.contains('stream-mode'));
+            btn.classList.toggle('active', body.classList.contains('stream-mode'));
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('tiktok_stream_mode') === 'true') {
+                document.body.classList.add('stream-mode');
+                document.getElementById('btn-stream').classList.add('active');
+            }
+            initParticles(); animateParticles();
+            document.getElementById('name1').focus();
+        });
+
+        // Particles Background (Pink/Red variant for Romance)
+        const canvas = document.getElementById('particle-canvas'); const ctx = canvas.getContext('2d');
+        let particles = [];
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1; this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5; this.alpha = Math.random() * 0.5 + 0.2;
+                this.color = Math.random() > 0.4 ? '#ff007f' : '#ff4d4d'; // More pinks and reds
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        function initParticles() { for (let i = 0; i < (canvas.width * canvas.height)/10000; i++) particles.push(new Particle()); }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+    </script>
+</body>
+</html>
