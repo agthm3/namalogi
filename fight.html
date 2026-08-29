@@ -8,6 +8,7 @@
         :root {
             --bg-color: #0b0c10;
             --primary: #ef233c; /* Red Boss */
+            --secondary: #00f2fe; /* Blue Netizen */
             --accent-gold: #ffb703;
             --text-main: #ffffff;
         }
@@ -53,7 +54,7 @@
         /* --- HUD --- */
         .hud {
             position: absolute; top: 20px; left: 0; right: 0; display: flex;
-            justify-content: space-between; align-items: center; padding: 0 40px; z-index: 20;
+            justify-content: space-between; align-items: flex-start; padding: 0 40px; z-index: 20;
         }
         .boss-hp-container {
             width: 50%; background: #222; border: 3px solid #444; border-radius: 15px;
@@ -62,11 +63,29 @@
         #boss-hp-fill { height: 100%; background: linear-gradient(90deg, #8a0e1b, var(--primary)); width: 100%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 900; font-size: 1.2rem; text-shadow: 1px 1px 2px #000; z-index: 2;}
         
+        .right-hud { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        
         .swarm-stats {
             background: rgba(255, 255, 255, 0.1); border: 2px solid #fff;
             padding: 10px 20px; border-radius: 10px; font-weight: 900; font-size: 1.5rem;
-            color: #fff; text-shadow: 0 0 10px #fff;
+            color: #fff; text-shadow: 0 0 10px #fff; text-align: center;
         }
+
+        /* --- LEADERBOARD --- */
+        .leaderboard {
+            background: rgba(0, 0, 0, 0.85); border: 2px solid var(--accent-gold);
+            border-radius: 10px; padding: 15px; width: 280px; box-shadow: 0 0 15px rgba(255, 183, 3, 0.4);
+        }
+        .lb-title {
+            color: var(--accent-gold); font-weight: 900; font-size: 1.1rem;
+            text-align: center; margin-bottom: 10px; border-bottom: 1px solid var(--accent-gold); padding-bottom: 5px;
+        }
+        .lb-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem; font-weight: bold;
+        }
+        .lb-rank { color: var(--secondary); margin-right: 5px; }
+        .lb-dmg { color: #ef233c; font-weight: 900; }
 
         /* --- FIGHTERS CONTAINER --- */
         .fighters-container {
@@ -75,7 +94,6 @@
             z-index: 10; padding: 0 5%;
         }
 
-        /* Boss Setup */
         .boss-char {
             display: flex; flex-direction: column; align-items: center;
             width: 30%; transition: opacity 0.5s;
@@ -87,7 +105,6 @@
             box-shadow: 0 0 15px rgba(239, 35, 60, 0.5);
         }
         
-        /* Swarm Setup */
         .swarm-container {
             width: 65%; height: 100%; display: flex; flex-wrap: wrap-reverse;
             align-content: flex-end; justify-content: flex-end; gap: 15px;
@@ -98,16 +115,19 @@
             display: flex; flex-direction: column; align-items: center;
             width: 120px; transition: 0.3s;
         }
+        .netizen-char.sultan { width: 160px; filter: drop-shadow(0 0 15px rgba(255, 183, 3, 0.6)); } /* Sultan lebih besar */
+        
         .netizen-name {
             font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.8);
             padding: 3px 8px; border-radius: 5px; text-overflow: ellipsis; 
             overflow: hidden; white-space: nowrap; max-width: 95%; border: 1px solid;
-            margin-bottom: 2px;
+            margin-bottom: 2px; text-align: center;
         }
+        .sultan .netizen-name { font-size: 1.1rem; color: #000 !important; background: var(--accent-gold); border-color: #fff !important; }
+        
         .mini-hp { width: 80%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 5px;}
         .mini-hp-fill { height: 100%; width: 100%; transition: 0.2s; }
 
-        /* --- STICKMAN ANIMATION WRAPPERS --- */
         .fighter-body { transform-origin: bottom center; }
         .idle-bob { animation: bobbing 0.8s infinite alternate ease-in-out; }
         .idle-bob-fast { animation: bobbing 0.6s infinite alternate ease-in-out; }
@@ -117,9 +137,8 @@
             100% { transform: translateY(-8px) scaleY(0.95); } 
         }
 
-        /* --- STICKMAN SVG SIZING --- */
         .stickman-boss { width: 280px; height: 350px; filter: drop-shadow(0 0 25px rgba(239, 35, 60, 0.6)); }
-        .stickman-netizen { width: 110px; height: 140px; transform: scaleX(-1); }
+        .stickman-netizen { width: 100%; height: auto; transform: scaleX(-1); }
 
         /* --- UI OVERLAYS --- */
         .combat-log {
@@ -152,36 +171,32 @@
         /* --- CONTROL PANEL --- */
         .control-panel {
             position: relative; z-index: 30; background: rgba(0,0,0,0.95); padding: 25px;
-            border-top: 3px solid #666; display: flex; justify-content: center; gap: 15px;
+            border-top: 3px solid #666; display: flex; justify-content: center; align-items: center; gap: 15px;
         }
         input[type="text"] {
             padding: 15px 25px; font-size: 1.5rem; border-radius: 10px; border: 2px solid #555;
-            background: #111; color: #fff; width: 450px; text-transform: uppercase; outline: none; transition: 0.3s;
+            background: #111; color: #fff; width: 400px; text-transform: uppercase; outline: none; transition: 0.3s;
         }
         input[type="text"]:focus { border-color: #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+        
         .btn-spawn {
-            padding: 15px 35px; font-size: 1.5rem; font-weight: 900; color: #000;
+            padding: 15px 25px; font-size: 1.2rem; font-weight: 900; color: #000;
             background: #fff; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); transition: 0.2s;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); transition: 0.2s; display: flex; align-items: center; gap: 8px;
         }
-        .btn-spawn:hover { background: #ccc; transform: scale(1.05); }
+        .btn-spawn:hover { transform: scale(1.05); }
+        
+        .btn-sultan {
+            background: linear-gradient(45deg, var(--accent-gold), #ffe066); color: #000;
+            box-shadow: 0 0 20px rgba(255, 183, 3, 0.6); border: 2px solid #fff;
+        }
 
         /* --- COMBAT ANIMATIONS --- */
         .anim-attack-right { animation: dashRight 0.5s ease-out; }
-        @keyframes dashRight { 
-            0% { transform: translate(0, 0); } 
-            30% { transform: translate(-20px, 10px) rotate(-5deg); } 
-            50% { transform: translate(120px, -40px) scale(1.15) rotate(10deg); } 
-            100% { transform: translate(0, 0); } 
-        }
+        @keyframes dashRight { 0% { transform: translate(0, 0); } 30% { transform: translate(-20px, 10px) rotate(-5deg); } 50% { transform: translate(120px, -40px) scale(1.15) rotate(10deg); } 100% { transform: translate(0, 0); } }
 
         .anim-attack-left { animation: dashLeft 0.4s ease-out; }
-        @keyframes dashLeft { 
-            0% { transform: translate(0, 0); } 
-            30% { transform: translate(10px, 5px) rotate(5deg); } 
-            50% { transform: translate(-80px, -30px) scale(1.15) rotate(-10deg); } 
-            100% { transform: translate(0, 0); } 
-        }
+        @keyframes dashLeft { 0% { transform: translate(0, 0); } 30% { transform: translate(10px, 5px) rotate(5deg); } 50% { transform: translate(-80px, -30px) scale(1.15) rotate(-10deg); } 100% { transform: translate(0, 0); } }
 
         .anim-hit-left { animation: hitLeft 0.4s; filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); }
         .anim-hit-right { animation: hitRight 0.4s; filter: brightness(2) sepia(1) hue-rotate(150deg) saturate(5); }
@@ -194,14 +209,18 @@
         /* --- STREAM MODE --- */
         body.stream-mode .boss-name { font-size: 3.5rem; }
         body.stream-mode .stickman-boss { width: 400px; height: 480px; }
-        body.stream-mode .stickman-netizen { width: 140px; height: 180px; }
+        body.stream-mode .netizen-char { width: 140px; }
+        body.stream-mode .netizen-char.sultan { width: 200px; }
         body.stream-mode .hp-text { font-size: 2.2rem; }
-        body.stream-mode .swarm-stats { font-size: 2.5rem; }
+        body.stream-mode .swarm-stats { font-size: 2.2rem; }
+        body.stream-mode .leaderboard { width: 350px; padding: 25px; }
+        body.stream-mode .lb-title { font-size: 1.5rem; }
+        body.stream-mode .lb-item { font-size: 1.3rem; padding: 8px 0;}
         body.stream-mode .combat-log { font-size: 2.5rem; bottom: 180px; }
         body.stream-mode .ultimate-overlay { font-size: 8rem; }
-        body.stream-mode .control-panel { padding: 35px; }
-        body.stream-mode input[type="text"] { font-size: 2.5rem; width: 650px; }
-        body.stream-mode .btn-spawn { font-size: 2.5rem; }
+        body.stream-mode .control-panel { padding: 30px; }
+        body.stream-mode input[type="text"] { font-size: 2rem; width: 500px; }
+        body.stream-mode .btn-spawn { font-size: 1.5rem; }
     </style>
 </head>
 <body>
@@ -224,8 +243,18 @@
                 <div id="boss-hp-fill"></div>
                 <div class="hp-text" id="boss-hp-text">0 / 0</div>
             </div>
-            <div class="swarm-stats">
-                PASUKAN: <span id="netizen-count">0</span>
+            
+            <div class="right-hud">
+                <div class="swarm-stats">
+                    PASUKAN: <span id="netizen-count">0</span>
+                </div>
+                
+                <div class="leaderboard">
+                    <div class="lb-title">🏆 TOP DAMAGE MVP</div>
+                    <div id="lb-list">
+                        <div class="lb-item" style="color: #666; justify-content: center;">Belum ada data</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -238,69 +267,78 @@
             <div class="boss-char" id="boss">
                 <div class="boss-name" id="boss-name">...</div>
                 <div class="fighter-body idle-bob" id="boss-body">
-                    <!-- SVG Stickman Boss akan di-inject via JS -->
+                    <!-- SVG Stickman Boss -->
                 </div>
             </div>
             
             <!-- NETIZENS SWARM -->
-            <div class="swarm-container" id="swarm">
-                <!-- Netizen elements will be injected here -->
-            </div>
+            <div class="swarm-container" id="swarm"></div>
         </div>
     </main>
 
     <!-- CONTROL PANEL -->
     <div class="control-panel">
-        <input type="text" id="inputName" placeholder="Ketik Nama Netizen (Bisa Spam!)" onkeypress="handleEnter(event)" autocomplete="off">
-        <button class="btn-spawn" onclick="spawnNetizen()">KIRIM PASUKAN 🥊</button>
+        <input type="text" id="inputName" placeholder="Ketik Nama (Komen / Gift)" onkeypress="handleEnter(event)" autocomplete="off">
+        <button class="btn-spawn" onclick="spawnNetizen('normal')">💬 KOMEN (Normal)</button>
+        <button class="btn-spawn btn-sultan" onclick="spawnNetizen('sultan')">🎁 GIFT (Sultan)</button>
     </div>
 
     <script>
         // ==========================================
+        // DATABASE SENJATA ACAK
+        // ==========================================
+        const dbWeapons = [
+            { name: "Tangan Kosong", bonus: 0, svg: `` },
+            { name: "Wajan Emak", bonus: 25, svg: `<g transform="translate(135,100) rotate(20)"><line x1="0" y1="0" x2="15" y2="-15" stroke="#444" stroke-width="6"/><circle cx="22" cy="-22" r="14" fill="#222" stroke="#555" stroke-width="2"/></g>` },
+            { name: "Sandal Jepit", bonus: 15, svg: `<g transform="translate(135,100) rotate(60)"><ellipse cx="15" cy="-10" rx="8" ry="16" fill="#06d6a0"/><path d="M 15 -20 L 10 -5 M 15 -20 L 20 -5" stroke="#fff" stroke-width="2"/></g>` },
+            { name: "Sapu Lidi", bonus: 20, svg: `<g transform="translate(135,100) rotate(-10)"><line x1="-10" y1="20" x2="20" y2="-40" stroke="#8B4513" stroke-width="4"/><path d="M 20 -40 L 10 -70 L 35 -65 Z" fill="#D2B48C"/></g>` },
+            { name: "Toa Megafon", bonus: 35, svg: `<g transform="translate(135,100) rotate(15)"><path d="M 5 -5 L 25 -15 L 25 5 Z" fill="#ef233c"/><rect x="0" y="-5" width="8" height="10" fill="#ccc"/></g>` }
+        ];
+
+        // ==========================================
         // GENERATOR STICKMAN SVG MURNI
         // ==========================================
-        function getStickmanSVG(color, isBoss) {
+        function getStickmanSVG(color, isBoss, isSultan = false, weaponSVG = '') {
             const glow = isBoss ? `filter="drop-shadow(0 0 10px ${color})"` : '';
+            const crown = isSultan ? `<path d="M 75 10 L 85 -5 L 90 10 L 95 -5 L 105 10 L 100 25 L 80 25 Z" fill="gold" stroke="#000" stroke-width="1" />` : '';
+            
             return `
-            <svg class="${isBoss ? 'stickman-boss' : 'stickman-netizen'}" viewBox="0 0 200 250" ${glow}>
+            <svg class="${isBoss ? 'stickman-boss' : 'stickman-netizen'}" viewBox="0 -20 200 270" ${glow}>
                 <g stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                    <!-- Back Leg -->
+                    <!-- Legs -->
                     <path d="M90,155 L105,210"/>
                     <ellipse cx="110" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
-                    
-                    <!-- Front Leg -->
                     <path d="M70,155 L50,210"/>
                     <ellipse cx="45" cy="215" rx="18" ry="6" fill="#fff" stroke="none"/>
                     
                     <!-- Torso -->
                     <path d="M80,60 L75,120"/>
                     
-                    <!-- Shorts (Celana Tinju) -->
+                    <!-- Shorts -->
                     <path d="M55,120 L95,120 L105,160 L80,150 L55,160 Z" fill="${color}" stroke="#fff" stroke-width="4"/>
-                    <path d="M80,120 L80,150" stroke="#fff" stroke-width="3"/> <!-- Garis tengah celana -->
-                    <path d="M60,125 L55,155" stroke="#fff" stroke-width="2"/> <!-- Garis strip samping -->
+                    <path d="M80,120 L80,150" stroke="#fff" stroke-width="3"/>
+                    <path d="M60,125 L55,155" stroke="#fff" stroke-width="2"/>
                     
-                    <!-- Head -->
+                    <!-- Head & Face -->
                     <circle cx="90" cy="35" r="28" fill="${isBoss ? 'rgba(239,35,60,0.1)' : 'rgba(255,255,255,0.05)'}"/>
-                    
-                    <!-- Angry Face -->
-                    <path d="M95,25 L112,33" stroke="#fff" stroke-width="4"/> <!-- Alis Kiri -->
-                    <circle cx="106" cy="38" r="4" fill="#fff" stroke="none"/> <!-- Mata -->
-                    <path d="M95,52 Q105,45 112,52" stroke="#fff" stroke-width="3"/> <!-- Mulut Merengut -->
+                    <path d="M95,25 L112,33" stroke="#fff" stroke-width="4"/>
+                    <circle cx="106" cy="38" r="4" fill="#fff" stroke="none"/>
+                    <path d="M95,52 Q105,45 112,52" stroke="#fff" stroke-width="3"/>
+                    ${crown}
                     
                     <!-- Back Arm & Glove -->
                     <path d="M80,75 L125,65"/>
                     <rect x="115" y="52" width="12" height="22" fill="#fff" stroke="none" transform="rotate(-15 125 60)"/>
                     <circle cx="140" cy="60" r="18" fill="${color}" stroke="#fff" stroke-width="3"/>
                     
-                    <!-- Front Arm & Glove -->
+                    <!-- Front Arm, Glove & Weapon -->
                     <path d="M75,90 L115,100"/>
                     <rect x="105" y="85" width="12" height="24" fill="#fff" stroke="none" transform="rotate(10 115 100)"/>
                     <circle cx="135" cy="100" r="22" fill="${color}" stroke="#fff" stroke-width="3"/>
+                    ${weaponSVG}
                 </g>
             </svg>`;
         }
-
 
         // ==========================================
         // AUDIO SYNTHESIZER
@@ -313,51 +351,39 @@
 
         function playPunch() {
             if(!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(120 + Math.random()*50, audioCtx.currentTime);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'square'; osc.frequency.setValueAtTime(120 + Math.random()*50, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
         function playUlt() {
             if(!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 1.2);
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 1.2);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 1.2);
         }
 
         function playKO() {
             if(!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(250, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 1);
         }
 
         // ==========================================
-        // DATABASE PEJABAT (BOSS)
+        // VARIABLES & SETUP
         // ==========================================
         const bosses = [
-            { name: "Prabowi", hp: 10000, atk: 250, ultName: "TENDANGAN GEMOY MEGAWATT", ultChance: 0.20, ultMult: 3 },
+            { name: "Prabowi", hp: 10000, atk: 250, ultName: "TENDANGAN GEMOY", ultChance: 0.20, ultMult: 3 },
             { name: "Gibrin", hp: 15000, atk: 350, ultName: "ASAM SULFAT BLASTER", ultChance: 0.25, ultMult: 2.5 },
             { name: "Jokowa", hp: 25000, atk: 450, ultName: "BANSOS GAIB STRIKE", ultChance: 0.15, ultMult: 3 },
-            { name: "Mak Banteng", hp: 40000, atk: 600, ultName: "SERUDUKAN PETUGAS PARTAI", ultChance: 0.20, ultMult: 3.5 },
+            { name: "Mak Banteng", hp: 40000, atk: 600, ultName: "SERUDUKAN PARTAI", ultChance: 0.20, ultMult: 3.5 },
             { name: "Lord Luhut", hp: 60000, atk: 800, ultName: "KENDALI SEGALA URUSAN", ultChance: 0.25, ultMult: 4 },
             { name: "Mulyoni", hp: 99999, atk: 1200, ultName: "JET PRIBADI NEPOTISME", ultChance: 0.20, ultMult: 5 }
         ];
@@ -366,6 +392,7 @@
         let b = null; 
         let netizens = []; 
         let fightInterval = null;
+        let damageTracker = {}; // Format: { "NAMA": 1500 }
 
         // SEED GEN
         function cyrb128(str) {
@@ -406,15 +433,13 @@
             
             document.getElementById('boss-name').innerText = b.name;
             const bossBody = document.getElementById('boss-body');
-            bossBody.innerHTML = getStickmanSVG('#ef233c', true);
-            
-            // Hapus animasi mati dan kembalikan ke animasi idle
+            bossBody.innerHTML = getStickmanSVG('#ef233c', true, false);
             bossBody.classList.remove('anim-die');
             bossBody.classList.add('idle-bob');
 
             updateBossHP();
             document.getElementById('boss').style.opacity = "1";
-            document.getElementById('combat-log').innerText = `⚠️ ${b.name} masuk Ring dan menantang seluruh netizen!`;
+            document.getElementById('combat-log').innerText = `⚠️ ${b.name} masuk Ring! Siapa berani?`;
         }
 
         function updateBossHP() {
@@ -424,39 +449,64 @@
             document.getElementById('boss-hp-text').innerText = `${Math.ceil(b.currentHp)} / ${b.hp}`;
         }
 
-        function handleEnter(e) { if(e.key === 'Enter') spawnNetizen(); }
+        function updateLeaderboard() {
+            const sorted = Object.entries(damageTracker).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            let html = '';
+            sorted.forEach((item, idx) => {
+                html += `<div class="lb-item"><span class="lb-rank">#${idx+1}</span> ${item[0]} <span class="lb-dmg">${item[1].toLocaleString('id-ID')}</span></div>`;
+            });
+            if(html === '') html = '<div class="lb-item" style="color:#666; justify-content:center;">Belum ada data</div>';
+            document.getElementById('lb-list').innerHTML = html;
+        }
 
-        function spawnNetizen() {
+        function handleEnter(e) { if(e.key === 'Enter') spawnNetizen('normal'); }
+
+        function spawnNetizen(type) {
             initAudio();
             const inputEl = document.getElementById('inputName');
             const name = inputEl.value.trim().toUpperCase();
             if(!name || !b) return;
 
-            const seed = cyrb128(name.toLowerCase());
+            const seed = cyrb128(name.toLowerCase() + Date.now()); // Date.now allows same name to spawn differently if wanted
             const prng = sfc32(seed[0], seed[1], seed[2], seed[3]);
             
-            const hp = Math.floor(prng() * 3000) + 2000; 
-            const atk = Math.floor(prng() * 60) + 30;  
-            const id = 'netizen_' + Date.now() + Math.floor(Math.random()*1000);
+            let hp = Math.floor(prng() * 3000) + 2000; 
+            let atk = Math.floor(prng() * 60) + 30;  
+            let isSultan = false;
             
+            // Random Weapon
+            const weapon = dbWeapons[Math.floor(prng() * dbWeapons.length)];
+            atk += weapon.bonus;
+
+            if(type === 'sultan') {
+                isSultan = true;
+                hp = Math.floor(prng() * 15000) + 10000; // Sultan HP
+                atk = Math.floor(prng() * 200) + 150;    // Sultan ATK
+            }
+            
+            const id = 'netizen_' + Date.now() + Math.floor(Math.random()*1000);
             const hue = Math.floor(prng() * 360);
-            const color = `hsl(${hue}, 80%, 60%)`;
+            const color = isSultan ? '#ffd166' : `hsl(${hue}, 80%, 60%)`;
             
             netizens.push({ id, name, hp, currentHp: hp, atk, color });
             
             const el = document.createElement('div');
-            el.className = 'netizen-char';
+            el.className = `netizen-char ${isSultan ? 'sultan' : ''}`;
             el.id = id;
             el.innerHTML = `
-                <div class="netizen-name" style="color: ${color}; border-color: ${color}; box-shadow: 0 0 5px ${color};">${name}</div>
+                <div class="netizen-name" style="color: ${color}; border-color: ${color};">${name}</div>
                 <div class="mini-hp"><div class="mini-hp-fill" style="background: ${color}; width:100%"></div></div>
-                <div class="fighter-body idle-bob-fast">${getStickmanSVG(color, false)}</div>
+                <div class="fighter-body idle-bob-fast">${getStickmanSVG(color, false, isSultan, weapon.svg)}</div>
             `;
             document.getElementById('swarm').appendChild(el);
             
             inputEl.value = "";
             document.getElementById('netizen-count').innerText = netizens.length;
-            document.getElementById('combat-log').innerText = `🔥 ${name} masuk ring dengan HP ${hp}!`;
+            
+            let msg = `🔥 ${name} masuk ring!`;
+            if (weapon.bonus > 0) msg = `🔥 ${name} masuk membawa ${weapon.name}!`;
+            if (isSultan) msg = `👑 SULTAN ${name} TURUN TANGAN DENGAN ${weapon.name}!`;
+            document.getElementById('combat-log').innerText = msg;
         }
 
         function showDamage(rect, amount, isCrit, isBossHit = false) {
@@ -479,11 +529,14 @@
         function combatStep() {
             if(!b || b.currentHp <= 0 || netizens.length === 0) return;
 
-            // 1. SEMUA NETIZEN MENYERANG BOSS (Bergerak serentak)
             let totalDmg = 0;
             netizens.forEach(n => {
                 const dmg = Math.floor(n.atk * (0.8 + Math.random()*0.4));
                 totalDmg += dmg;
+                
+                // Track Damage
+                damageTracker[n.name] = (damageTracker[n.name] || 0) + dmg;
+
                 const el = document.getElementById(n.id);
                 if(el) {
                     const bodyEl = el.querySelector('.fighter-body');
@@ -495,8 +548,8 @@
                     }, 400);
                 }
             });
+            updateLeaderboard();
 
-            // Reaksi Boss Terkena Hit
             setTimeout(() => {
                 b.currentHp -= totalDmg;
                 playPunch();
@@ -512,7 +565,6 @@
                 
                 showDamage(document.getElementById('boss').getBoundingClientRect(), totalDmg, false, true);
                 updateBossHP();
-                
                 document.getElementById('combat-log').innerText = `💥 Pasukan merangsek maju! (-${totalDmg} HP Boss)`;
                 
                 if(b.currentHp <= 0) {
@@ -520,7 +572,6 @@
                     return;
                 }
 
-                // 2. BOSS MEMBALAS 
                 setTimeout(() => {
                     if(b.currentHp <= 0 || netizens.length === 0) return;
 
@@ -555,7 +606,6 @@
                         }
                     }
 
-                    // Update UI & Filter Dead Netizens
                     netizens = netizens.filter(n => {
                         const el = document.getElementById(n.id);
                         if(!el) return false;
@@ -567,7 +617,6 @@
                             return false;
                         } else {
                             el.querySelector('.mini-hp-fill').style.width = (n.currentHp / n.hp * 100) + '%';
-                            
                             const nBody = el.querySelector('.fighter-body');
                             nBody.classList.remove('idle-bob-fast');
                             nBody.classList.add('anim-hit-right');
@@ -588,7 +637,6 @@
                             if(netizens.length === 0) playKO();
                         }, 1200);
                     }
-
                 }, 1000); 
 
             }, 200); 
